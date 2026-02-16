@@ -1,0 +1,136 @@
+{
+  "common": {
+    "appName": "NIS2 Compliance Audit",
+    "language": "Sprache",
+    "german": "Deutsch",
+    "english": "English",
+    "learnMore": "Mehr erfahren",
+    "back": "Zurück",
+    "next": "Weiter",
+    "close": "Schließen",
+    "save": "Speichern",
+    "download": "Herunterladen",
+    "loading": "Wird geladen...",
+    "error": "Ein Fehler ist aufgetreten",
+    "imprint": "Impressum",
+    "privacy": "Datenschutz",
+    "terms": "AGB"
+  },
+  "landing": {
+    "hero": {
+      "title": "NIS2 ist Chefsache.",
+      "subtitle": "Schützen Sie sich vor persönlicher Haftung bis zu 10 Mio. €.",
+      "description": "Ab Oktober 2024 haften Geschäftsführer persönlich für Cybersicherheitsmängel. Prüfen Sie jetzt in 3 Minuten, ob Ihr Unternehmen betroffen ist.",
+      "cta": "Kostenloser Quick-Check",
+      "ctaFull": "Vollständigen Audit starten"
+    },
+    "calculator": {
+      "title": "Haftungsrechner",
+      "subtitle": "Berechnen Sie Ihr maximales Bußgeldrisiko nach NIS2",
+      "revenue": "Jahresumsatz (EUR)",
+      "revenuePlaceholder": "z.B. 50.000.000",
+      "employees": "Anzahl Mitarbeiter",
+      "employeesPlaceholder": "z.B. 250",
+      "result": "Ihr maximales Bußgeld",
+      "affected": "Ihr Unternehmen fällt wahrscheinlich unter NIS2",
+      "notAffected": "Möglicherweise nicht direkt betroffen",
+      "notAffectedHint": "Aber: Als Teil einer Lieferkette können Sie trotzdem indirekt betroffen sein."
+    },
+    "quickCheck": {
+      "title": "3-Minuten Quick-Check",
+      "subtitle": "5 Fragen zur Einschätzung Ihres NIS2-Risikos",
+      "question": "Frage {current} von {total}",
+      "next": "Weiter",
+      "back": "Zurück",
+      "finish": "Auswertung anzeigen"
+    },
+    "results": {
+      "title": "Ihre Quick-Check Ergebnisse",
+      "locked": "Detailliertes Ergebnis gesperrt",
+      "unlockCta": "Ergebnisse freischalten"
+    },
+    "leadCapture": {
+      "title": "Ergebnisse freischalten",
+      "subtitle": "Geben Sie Ihre geschäftliche E-Mail-Adresse ein, um Ihren personalisierten NIS2-Risikobericht zu erhalten.",
+      "email": "Geschäftliche E-Mail",
+      "emailPlaceholder": "name@unternehmen.de",
+      "company": "Unternehmen (optional)",
+      "companyPlaceholder": "Firmenname GmbH",
+      "consent": "Ich stimme der Verarbeitung meiner Daten gemäß der Datenschutzerklärung zu.",
+      "submit": "Bericht anzeigen",
+      "submitting": "Wird verarbeitet..."
+    },
+    "trustSignals": {
+      "noRegistration": "Keine Registrierung nötig",
+      "gdprCompliant": "DSGVO-konform",
+      "instantResult": "Sofortergebnis",
+      "freeCheck": "Kostenloser Check"
+    }
+  },
+  "dashboard": {
+    "title": "NIS2 Compliance Dashboard",
+    "score": "Compliance-Score",
+    "scoreDescription": "Gesamtbewertung Ihrer NIS2-Konformität",
+    "fineRisk": "Aktuelles Bußgeld-Risiko",
+    "fineRiskBased": "Basierend auf Ihrem Umsatz und offenen Lücken",
+    "nextAction": "Nächster wichtigster Schritt",
+    "nextActionDescription": "Schließen Sie diese kritische Lücke",
+    "categories": "Kategorien-Übersicht",
+    "startAudit": "Audit starten",
+    "continueAudit": "Audit fortsetzen",
+    "downloadReport": "Bericht herunterladen",
+    "questionsAnswered": "{answered} von {total} beantwortet",
+    "locked": "Gesperrt",
+    "free": "Kostenlos"
+  },
+  "audit": {
+    "title": "NIS2 Audit",
+    "fulfilled": "Erfüllt",
+    "partial": "Teilweise erfüllt",
+    "notFulfilled": "Nicht erfüllt",
+    "notApplicable": "Nicht anwendbar",
+    "saveStatus": "Gespeichert",
+    "saving": "Wird gespeichert...",
+    "legalRef": "Rechtsgrundlage",
+    "moreInfo": "Weitere Informationen",
+    "progress": "Fortschritt",
+    "complete": "Abgeschlossen",
+    "nextCategory": "Nächste Kategorie",
+    "prevCategory": "Vorherige Kategorie",
+    "backToDashboard": "Zurück zum Dashboard"
+  },
+  "paywall": {
+    "title": "Vollständigen Audit freischalten",
+    "description": "Diese Kategorie ist Teil des vollständigen NIS2-Audits.",
+    "benefit1": "Alle 10 NIS2-Kategorien",
+    "benefit2": "Detaillierter PDF-Bericht",
+    "benefit3": "Individuelle Handlungsempfehlungen",
+    "benefit4": "Gap-Analyse mit Priorisierung",
+    "cta": "Kontakt aufnehmen",
+    "back": "Zurück zum Dashboard"
+  },
+  "report": {
+    "title": "NIS2 Audit-Bericht",
+    "preview": "Berichtsvorschau",
+    "download": "PDF herunterladen",
+    "generating": "Bericht wird erstellt...",
+    "executiveSummary": "Zusammenfassung",
+    "categoryDetails": "Kategorie-Details",
+    "gapAnalysis": "Gap-Analyse",
+    "recommendations": "Handlungsempfehlungen",
+    "overallScore": "Gesamtbewertung",
+    "generatedOn": "Erstellt am {date}"
+  },
+  "categories": {
+    "risk-management": "Risikomanagement",
+    "incident-handling": "Incident Handling",
+    "business-continuity": "Business Continuity",
+    "supply-chain": "Lieferkettensicherheit",
+    "network-security": "Netzsicherheit",
+    "assessment": "Bewertung & Testing",
+    "cryptography": "Kryptografie",
+    "hr-training": "Personal & Schulung",
+    "authentication": "Authentifizierung",
+    "communication": "Kommunikation"
+  }
+}

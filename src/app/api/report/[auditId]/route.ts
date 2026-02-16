@@ -1,0 +1,46 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { generateAuditPDF } from "@/lib/pdf-generator";
+
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ auditId: string }> }
+) {
+  try {
+    const { auditId } = await params;
+
+    const audit = await prisma.audit.findUnique({
+      where: { id: auditId },
+      include: { answers: true },
+    });
+
+    if (!audit) {
+      return NextResponse.json({ error: "Audit not found" }, { status: 404 });
+    }
+
+    const pdfBytes = await generateAuditPDF(
+      {
+        companyName: audit.companyName,
+        revenue: audit.revenue,
+        locale: audit.locale,
+      },
+      audit.answers.map((a) => ({
+        questionId: a.questionId,
+        categoryId: a.categoryId,
+        value: a.value,
+      }))
+    );
+
+    return new NextResponse(pdfBytes.buffer as ArrayBuffer, {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="nis2-audit-report-${auditId.slice(0, 8)}.pdf"`,
+      },
+    });
+  } catch {
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

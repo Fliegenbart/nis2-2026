@@ -1,0 +1,20 @@
+services:
+  nis2-audit:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - nis2-data:/app/data
+    environment:
+      - DATABASE_URL=file:/app/data/nis2.db
+      - NEXT_PUBLIC_BASE_URL=http://5.9.106.75:3000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  nis2-data:
+    driver: local

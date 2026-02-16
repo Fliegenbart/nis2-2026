@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Audit {
+  id            String   @id @default(uuid())
+  companyName   String?
+  revenue       Float?
+  employeeCount Int?
+  industry      String?
+  locale        String   @default("de")
+  isPremium     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  answers Answer[]
+  lead    Lead?
+}
+
+model Lead {
+  id          String   @id @default(uuid())
+  email       String
+  companyName String?
+  consent     Boolean  @default(false)
+  source      String   @default("quick-check")
+  createdAt   DateTime @default(now())
+
+  auditId String @unique
+  audit   Audit  @relation(fields: [auditId], references: [id], onDelete: Cascade)
+}
+
+model Answer {
+  id         String   @id @default(uuid())
+  questionId String
+  categoryId String
+  value      String
+  notes      String?
+  updatedAt  DateTime @updatedAt
+
+  auditId String
+  audit   Audit  @relation(fields: [auditId], references: [id], onDelete: Cascade)
+
+  @@unique([auditId, questionId])
+}

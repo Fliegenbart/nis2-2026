@@ -1,0 +1,136 @@
+{
+  "common": {
+    "appName": "NIS2 Compliance Audit",
+    "language": "Language",
+    "german": "Deutsch",
+    "english": "English",
+    "learnMore": "Learn more",
+    "back": "Back",
+    "next": "Next",
+    "close": "Close",
+    "save": "Save",
+    "download": "Download",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "imprint": "Imprint",
+    "privacy": "Privacy",
+    "terms": "Terms"
+  },
+  "landing": {
+    "hero": {
+      "title": "NIS2 is a Board-Level Issue.",
+      "subtitle": "Protect yourself from personal liability up to €10 million.",
+      "description": "Since October 2024, executives are personally liable for cybersecurity deficiencies. Check now in 3 minutes if your company is affected.",
+      "cta": "Free Quick Check",
+      "ctaFull": "Start Full Audit"
+    },
+    "calculator": {
+      "title": "Liability Calculator",
+      "subtitle": "Calculate your maximum fine risk under NIS2",
+      "revenue": "Annual Revenue (EUR)",
+      "revenuePlaceholder": "e.g. 50,000,000",
+      "employees": "Number of Employees",
+      "employeesPlaceholder": "e.g. 250",
+      "result": "Your Maximum Fine",
+      "affected": "Your company likely falls under NIS2",
+      "notAffected": "Possibly not directly affected",
+      "notAffectedHint": "However: As part of a supply chain, you may still be indirectly affected."
+    },
+    "quickCheck": {
+      "title": "3-Minute Quick Check",
+      "subtitle": "5 questions to assess your NIS2 risk",
+      "question": "Question {current} of {total}",
+      "next": "Next",
+      "back": "Back",
+      "finish": "Show Results"
+    },
+    "results": {
+      "title": "Your Quick Check Results",
+      "locked": "Detailed results locked",
+      "unlockCta": "Unlock Results"
+    },
+    "leadCapture": {
+      "title": "Unlock Your Results",
+      "subtitle": "Enter your business email to receive your personalized NIS2 risk report.",
+      "email": "Business Email",
+      "emailPlaceholder": "name@company.com",
+      "company": "Company (optional)",
+      "companyPlaceholder": "Company Inc.",
+      "consent": "I agree to the processing of my data in accordance with the privacy policy.",
+      "submit": "View Report",
+      "submitting": "Processing..."
+    },
+    "trustSignals": {
+      "noRegistration": "No registration required",
+      "gdprCompliant": "GDPR compliant",
+      "instantResult": "Instant results",
+      "freeCheck": "Free check"
+    }
+  },
+  "dashboard": {
+    "title": "NIS2 Compliance Dashboard",
+    "score": "Compliance Score",
+    "scoreDescription": "Overall assessment of your NIS2 compliance",
+    "fineRisk": "Current Fine Risk",
+    "fineRiskBased": "Based on your revenue and open gaps",
+    "nextAction": "Next Critical Step",
+    "nextActionDescription": "Close this critical gap",
+    "categories": "Category Overview",
+    "startAudit": "Start Audit",
+    "continueAudit": "Continue Audit",
+    "downloadReport": "Download Report",
+    "questionsAnswered": "{answered} of {total} answered",
+    "locked": "Locked",
+    "free": "Free"
+  },
+  "audit": {
+    "title": "NIS2 Audit",
+    "fulfilled": "Fulfilled",
+    "partial": "Partially Fulfilled",
+    "notFulfilled": "Not Fulfilled",
+    "notApplicable": "Not Applicable",
+    "saveStatus": "Saved",
+    "saving": "Saving...",
+    "legalRef": "Legal Basis",
+    "moreInfo": "More Information",
+    "progress": "Progress",
+    "complete": "Complete",
+    "nextCategory": "Next Category",
+    "prevCategory": "Previous Category",
+    "backToDashboard": "Back to Dashboard"
+  },
+  "paywall": {
+    "title": "Unlock Full Audit",
+    "description": "This category is part of the complete NIS2 audit.",
+    "benefit1": "All 10 NIS2 categories",
+    "benefit2": "Detailed PDF report",
+    "benefit3": "Individual recommendations",
+    "benefit4": "Prioritized gap analysis",
+    "cta": "Contact Us",
+    "back": "Back to Dashboard"
+  },
+  "report": {
+    "title": "NIS2 Audit Report",
+    "preview": "Report Preview",
+    "download": "Download PDF",
+    "generating": "Generating report...",
+    "executiveSummary": "Executive Summary",
+    "categoryDetails": "Category Details",
+    "gapAnalysis": "Gap Analysis",
+    "recommendations": "Recommendations",
+    "overallScore": "Overall Score",
+    "generatedOn": "Generated on {date}"
+  },
+  "categories": {
+    "risk-management": "Risk Management",
+    "incident-handling": "Incident Handling",
+    "business-continuity": "Business Continuity",
+    "supply-chain": "Supply Chain Security",
+    "network-security": "Network Security",
+    "assessment": "Assessment & Testing",
+    "cryptography": "Cryptography",
+    "hr-training": "HR & Training",
+    "authentication": "Authentication",
+    "communication": "Communication"
+  }
+}
