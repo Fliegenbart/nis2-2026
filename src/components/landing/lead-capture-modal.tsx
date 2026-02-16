@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { getCategoryForQuestion } from "@/data/nis2-framework";
 import type { AnswerValue } from "@/data/nis2-framework";
 
 interface LeadCaptureModalProps {
@@ -52,11 +53,7 @@ export function LeadCaptureModal({
       const answersPayload = Object.entries(quickCheckAnswers).map(
         ([questionId, value]) => ({
           questionId,
-          categoryId: questionId.split("-")[0] === "rm" ? "risk-management" :
-                      questionId.split("-")[0] === "ih" ? "incident-handling" :
-                      questionId.split("-")[0] === "au" ? "authentication" :
-                      questionId.split("-")[0] === "bc" ? "business-continuity" :
-                      "cryptography",
+          categoryId: getCategoryForQuestion(questionId)?.id ?? "risk-management",
           value,
         })
       );

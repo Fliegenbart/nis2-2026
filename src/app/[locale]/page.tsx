@@ -35,7 +35,9 @@ export default function LandingPage() {
   function handleQuickCheckComplete(answers: Record<string, AnswerValue>) {
     setQuickCheckAnswers(answers);
     setState("results");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setTimeout(() => {
+      quickCheckRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
   }
 
   function handleUnlockResults() {
