@@ -46,3 +46,6 @@ next-env.d.ts
 # prisma
 prisma/data/
 prisma.config.ts
+
+# local data
+/data/

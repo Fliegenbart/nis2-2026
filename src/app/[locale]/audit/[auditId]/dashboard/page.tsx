@@ -23,56 +23,62 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-4">
-          <Shield className="h-12 w-12 text-indigo-600 animate-pulse" />
-          <p className="text-slate-500">{t("title")}...</p>
+      <div className="min-h-screen bg-slate-950">
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="flex flex-col items-center gap-4">
+            <Shield className="h-12 w-12 text-cyan-400 animate-pulse" />
+            <p className="text-slate-400">{t("title")}...</p>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">{t("title")}</h1>
-          {auditData?.companyName && (
-            <p className="text-slate-500 mt-1">{auditData.companyName}</p>
-          )}
+    <div className="min-h-screen bg-slate-950">
+      <div className="scan-lines" />
+      <div className="dot-grid" />
+      <div className="relative z-10 container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-white text-3xl font-bold">{t("title")}</h1>
+            {auditData?.companyName && (
+              <p className="text-slate-400 mt-1">{auditData.companyName}</p>
+            )}
+          </div>
+          <Link href={`/${locale}/audit/${auditId}/report`}>
+            <Button variant="outline" className="gap-2 border-slate-700 text-slate-400 hover:text-white hover:border-cyan-500/40">
+              <Download className="h-4 w-4" />
+              {t("downloadReport")}
+            </Button>
+          </Link>
         </div>
-        <Link href={`/${locale}/audit/${auditId}/report`}>
-          <Button variant="outline" className="gap-2">
-            <Download className="h-4 w-4" />
-            {t("downloadReport")}
-          </Button>
-        </Link>
-      </div>
 
-      <div className="grid gap-6 lg:grid-cols-3 mb-8">
-        <div className="lg:col-span-1">
-          <ComplianceScoreChart score={overallScore} />
+        <div className="grid gap-6 lg:grid-cols-3 mb-8">
+          <div className="lg:col-span-1">
+            <ComplianceScoreChart score={overallScore} />
+          </div>
+          <div className="lg:col-span-1">
+            <LiabilityTicker
+              revenue={auditData?.revenue || 0}
+              score={overallScore}
+            />
+          </div>
+          <div className="lg:col-span-1">
+            <NextBestAction
+              categories={NIS2_CATEGORIES}
+              answers={answers}
+              auditId={auditId}
+            />
+          </div>
         </div>
-        <div className="lg:col-span-1">
-          <LiabilityTicker
-            revenue={auditData?.revenue || 0}
-            score={overallScore}
-          />
-        </div>
-        <div className="lg:col-span-1">
-          <NextBestAction
-            categories={NIS2_CATEGORIES}
-            answers={answers}
-            auditId={auditId}
-          />
-        </div>
-      </div>
 
-      <CategoryProgressGrid
-        categories={NIS2_CATEGORIES}
-        categoryScores={categoryScores}
-        auditId={auditId}
-      />
+        <CategoryProgressGrid
+          categories={NIS2_CATEGORIES}
+          categoryScores={categoryScores}
+          auditId={auditId}
+        />
+      </div>
     </div>
   );
 }

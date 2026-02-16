@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Outfit, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -9,9 +9,10 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import "../globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
 });
 
 const geistMono = Geist_Mono({
@@ -43,7 +44,7 @@ export default async function LocaleLayout({
   return (
     <html lang={locale}>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+        className={`${outfit.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
         <NextIntlClientProvider messages={messages}>
           <TooltipProvider>

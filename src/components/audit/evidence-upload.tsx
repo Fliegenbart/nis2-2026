@@ -47,21 +47,21 @@ export function EvidenceUpload({
           {questionEvidences.map((ev) => (
             <div
               key={ev.id}
-              className="flex items-center gap-2 rounded-md bg-slate-50 px-3 py-1.5 text-sm"
+              className="flex items-center gap-2 rounded-md bg-slate-800/50 border border-slate-700/30 px-3 py-1.5 text-sm"
             >
-              <FileText className="h-3.5 w-3.5 shrink-0 text-indigo-500" />
+              <FileText className="h-3.5 w-3.5 shrink-0 text-cyan-400" />
               <a
                 href={ev.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="min-w-0 flex-1 truncate text-indigo-600 hover:underline"
+                className="min-w-0 flex-1 truncate text-cyan-400 hover:text-cyan-300"
               >
                 {ev.filename}
               </a>
               <button
                 onClick={() => handleRemove(ev.id)}
                 disabled={removing === ev.id}
-                className="shrink-0 text-slate-400 transition hover:text-rose-500 disabled:opacity-50"
+                className="shrink-0 text-slate-600 transition hover:text-rose-400 disabled:opacity-50"
               >
                 {removing === ev.id ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -83,7 +83,7 @@ export function EvidenceUpload({
       <button
         onClick={() => fileInputRef.current?.click()}
         disabled={uploading}
-        className="flex items-center gap-1.5 rounded-md border border-dashed border-slate-300 px-3 py-1.5 text-xs text-slate-500 transition hover:border-indigo-400 hover:text-indigo-600 disabled:opacity-50"
+        className="flex items-center gap-1.5 rounded-md border border-dashed border-slate-700/50 px-3 py-1.5 text-xs text-slate-500 transition hover:border-cyan-500/40 hover:text-cyan-400 disabled:opacity-50"
       >
         {uploading ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin" />

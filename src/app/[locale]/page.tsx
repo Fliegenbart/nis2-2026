@@ -7,8 +7,12 @@ import { HeroSection } from "@/components/landing/hero-section";
 import { SocialProofStats } from "@/components/landing/social-proof-stats";
 import { ProblemSection } from "@/components/landing/problem-section";
 import { LiabilityCalculator } from "@/components/landing/liability-calculator";
+import { GuaranteeSection } from "@/components/landing/guarantee-section";
+import { FounderSection } from "@/components/landing/founder-section";
+import { PricingSection } from "@/components/landing/pricing-section";
 import { QuickCheck } from "@/components/landing/quick-check";
 import { QuickCheckResults } from "@/components/landing/quick-check-results";
+import { CTABookingSection } from "@/components/landing/cta-booking-section";
 import { LeadCaptureModal } from "@/components/landing/lead-capture-modal";
 import type { AnswerValue } from "@/data/nis2-framework";
 
@@ -45,6 +49,9 @@ export default function LandingPage() {
       <SocialProofStats locale={locale} />
       <ProblemSection />
       <LiabilityCalculator />
+      <GuaranteeSection />
+      <FounderSection />
+      <PricingSection />
 
       <div ref={quickCheckRef}>
         {state === "quick-check" && (
@@ -57,6 +64,8 @@ export default function LandingPage() {
           />
         )}
       </div>
+
+      <CTABookingSection />
 
       <LeadCaptureModal
         open={showLeadCapture}

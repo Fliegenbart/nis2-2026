@@ -24,7 +24,7 @@ export function CategoryProgressGrid({
 
   return (
     <section>
-      <h2 className="mb-6 text-xl font-semibold">{t("categories")}</h2>
+      <h2 className="mb-6 text-white text-xl font-bold">{t("categories")}</h2>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {categories.map((category) => {
           const cs = scoreMap.get(category.id);

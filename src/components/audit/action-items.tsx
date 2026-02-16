@@ -30,10 +30,10 @@ interface ActionItemsProps {
 }
 
 const priorityConfig = {
-  critical: { label: "Kritisch", color: "text-rose-600 bg-rose-50 border-rose-200" },
-  high: { label: "Hoch", color: "text-amber-600 bg-amber-50 border-amber-200" },
-  medium: { label: "Mittel", color: "text-blue-600 bg-blue-50 border-blue-200" },
-  low: { label: "Niedrig", color: "text-slate-500 bg-slate-50 border-slate-200" },
+  critical: { label: "Kritisch", color: "text-rose-400 bg-rose-500/10 border-rose-500/30" },
+  high: { label: "Hoch", color: "text-amber-400 bg-amber-500/10 border-amber-500/30" },
+  medium: { label: "Mittel", color: "text-cyan-400 bg-cyan-500/10 border-cyan-500/30" },
+  low: { label: "Niedrig", color: "text-slate-500 bg-slate-500/10 border-slate-500/30" },
 };
 
 const statusIcons = {
@@ -87,18 +87,18 @@ export function ActionItemsList({
         key={item.id}
         className={`flex items-start gap-3 rounded-lg border px-4 py-3 transition ${
           item.status === "done"
-            ? "border-slate-100 bg-slate-50/50 opacity-60"
-            : "border-slate-200 bg-white"
+            ? "border-slate-700/20 bg-slate-900/30 opacity-50"
+            : "border-slate-700/30 bg-slate-800/30"
         }`}
       >
         <button
           onClick={() => cycleStatus(item)}
           className={`mt-0.5 shrink-0 transition ${
             item.status === "done"
-              ? "text-emerald-500"
+              ? "text-emerald-400"
               : item.status === "in_progress"
-                ? "text-amber-500"
-                : "text-slate-300 hover:text-slate-500"
+                ? "text-amber-400"
+                : "text-slate-600 hover:text-slate-400"
           }`}
           title="Status wechseln"
         >
@@ -108,7 +108,7 @@ export function ActionItemsList({
         <div className="min-w-0 flex-1">
           <p
             className={`text-sm font-medium ${
-              item.status === "done" ? "text-slate-400 line-through" : "text-slate-900"
+              item.status === "done" ? "text-slate-600 line-through" : "text-slate-200"
             }`}
           >
             {item.title}
@@ -126,7 +126,7 @@ export function ActionItemsList({
 
         <button
           onClick={() => onDelete(item.id)}
-          className="shrink-0 text-slate-300 transition hover:text-rose-500"
+          className="shrink-0 text-slate-600 transition hover:text-rose-400"
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -135,17 +135,17 @@ export function ActionItemsList({
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-slate-700/30 bg-slate-900/60">
       <button
         onClick={() => setExpanded(!expanded)}
         className="flex w-full items-center justify-between px-5 py-4"
       >
         <div className="flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-amber-500" />
-          <h3 className="text-base font-semibold text-slate-900">
+          <AlertTriangle className="h-5 w-5 text-amber-400" />
+          <h3 className="text-base font-semibold text-white">
             Maßnahmen
           </h3>
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+          <span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs font-medium text-slate-400">
             {openItems.length} offen
           </span>
         </div>
@@ -157,12 +157,12 @@ export function ActionItemsList({
       </button>
 
       {expanded && (
-        <div className="border-t border-slate-100 px-5 py-4">
+        <div className="border-t border-slate-700/30 px-5 py-4">
           <div className="space-y-2">
             {openItems.map(renderItem)}
             {doneItems.length > 0 && (
               <>
-                <p className="mt-4 text-xs font-medium text-slate-400">
+                <p className="mt-4 text-xs font-medium text-slate-500">
                   Erledigt ({doneItems.length})
                 </p>
                 {doneItems.map(renderItem)}
@@ -179,12 +179,12 @@ export function ActionItemsList({
                 onChange={(e) => setNewTitle(e.target.value)}
                 placeholder="Neue Maßnahme..."
                 autoFocus
-                className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                className="min-w-0 flex-1 rounded-lg border border-slate-700/50 bg-slate-900/80 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-cyan-500/50 focus:outline-none"
               />
               <select
                 value={newPriority}
                 onChange={(e) => setNewPriority(e.target.value)}
-                className="rounded-lg border border-slate-300 px-2 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                className="rounded-lg border border-slate-700/50 bg-slate-900/80 px-2 py-2 text-sm text-white focus:border-cyan-500/50 focus:outline-none"
               >
                 <option value="critical">Kritisch</option>
                 <option value="high">Hoch</option>
@@ -194,14 +194,14 @@ export function ActionItemsList({
               <button
                 type="submit"
                 disabled={creating || !newTitle.trim()}
-                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-500 disabled:opacity-50"
+                className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-cyan-400 disabled:opacity-50"
               >
                 {creating ? "..." : "Hinzufügen"}
               </button>
               <button
                 type="button"
                 onClick={() => setShowForm(false)}
-                className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-500 transition hover:text-slate-700"
+                className="rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-500 transition hover:text-slate-300"
               >
                 ×
               </button>
@@ -209,7 +209,7 @@ export function ActionItemsList({
           ) : (
             <button
               onClick={() => setShowForm(true)}
-              className="mt-4 flex items-center gap-1.5 text-sm text-indigo-600 transition hover:text-indigo-500"
+              className="mt-4 flex items-center gap-1.5 text-sm text-cyan-400 transition hover:text-cyan-300"
             >
               <Plus className="h-4 w-4" />
               Maßnahme hinzufügen

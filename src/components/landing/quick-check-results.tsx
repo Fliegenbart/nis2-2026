@@ -2,10 +2,9 @@
 
 import { useTranslations, useLocale } from "next-intl";
 import { Lock, CheckCircle, XCircle, MinusCircle } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { QUICK_CHECK_QUESTION_IDS, getQuestionById } from "@/data/nis2-framework";
 import type { AnswerValue } from "@/data/nis2-framework";
+import { motion } from "motion/react";
 
 interface QuickCheckResultsProps {
   answers: Record<string, AnswerValue>;
@@ -29,53 +28,94 @@ export function QuickCheckResults({ answers, onUnlock }: QuickCheckResultsProps)
   const score = Math.round((fulfilledCount / questions.length) * 100);
 
   return (
-    <section className="py-16 sm:py-20 bg-slate-50" id="results">
-      <div className="container mx-auto px-4">
+    <motion.section
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.7, ease: "easeOut" }}
+      className="relative py-16 sm:py-20 bg-slate-950 overflow-hidden scan-lines"
+      id="results"
+    >
+      {/* Ambient glow orbs */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute top-1/3 left-1/3 h-64 w-64 rounded-full bg-cyan-500/10 blur-[120px]" />
+        <div className="absolute bottom-1/3 right-1/4 h-48 w-48 rounded-full bg-rose-500/8 blur-[100px]" />
+      </div>
+
+      <div className="relative z-10 container mx-auto px-4">
         <div className="mx-auto max-w-2xl">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-slate-900 mb-2">
+            <h2 className="text-3xl font-bold text-gradient-cyan mb-2">
               {t("title")}
             </h2>
           </div>
 
-          <Card className="shadow-xl overflow-hidden">
-            <CardHeader className="bg-slate-900 text-white text-center py-8">
-              <CardTitle className="text-5xl font-extrabold">{score}%</CardTitle>
-              <p className="text-slate-300 mt-2">Quick-Check Score</p>
-            </CardHeader>
-            <CardContent className="p-6 space-y-3">
-              {questions.map((question) => (
-                <div
-                  key={question.id}
-                  className="flex items-center gap-3 rounded-lg border p-3"
-                >
-                  {answerIcons[answers[question.id]] || answerIcons.not_fulfilled}
-                  <span className="text-sm text-slate-700 flex-1">
-                    {question.text[locale as "de" | "en"]}
-                  </span>
+          {/* Animated border wrapper */}
+          <div className="animated-border rounded-xl p-px">
+            {/* Glass card inner */}
+            <div className="glass-card rounded-xl overflow-hidden">
+              {/* Score header */}
+              <div className="relative bg-slate-900/80 text-center py-10 overflow-hidden">
+                {/* Decorative glow orb behind number */}
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                  <div className="h-32 w-32 rounded-full bg-cyan-500/15 blur-[60px]" />
                 </div>
-              ))}
-            </CardContent>
-
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-t from-white via-white/95 to-transparent" />
-              <div className="relative flex flex-col items-center gap-4 px-6 pb-8 pt-16">
-                <Lock className="h-8 w-8 text-slate-400" />
-                <p className="text-center font-semibold text-slate-700">
-                  {t("locked")}
-                </p>
-                <Button
-                  size="lg"
-                  onClick={onUnlock}
-                  className="bg-indigo-600 hover:bg-indigo-500"
+                {/* Shimmer overlay */}
+                <div className="absolute inset-0 shimmer" />
+                <motion.div
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  whileInView={{ scale: 1, opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, ease: "easeOut", delay: 0.2 }}
+                  className="relative z-10"
                 >
-                  {t("unlockCta")}
-                </Button>
+                  <p className="text-5xl font-extrabold text-gradient-cyan">{score}%</p>
+                  <p className="text-slate-400 mt-2">Quick-Check Score</p>
+                </motion.div>
+              </div>
+
+              {/* Question result rows */}
+              <div className="p-6 space-y-3">
+                {questions.map((question, index) => (
+                  <motion.div
+                    key={question.id}
+                    initial={{ opacity: 0, y: 12 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.3, delay: 0.1 * index }}
+                    className="flex items-center gap-3 rounded-lg border border-slate-700/50 bg-slate-900/50 p-3"
+                  >
+                    {answerIcons[answers[question.id]] || answerIcons.not_fulfilled}
+                    <span className="text-sm text-slate-300 flex-1">
+                      {question.text[locale as "de" | "en"]}
+                    </span>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Lock overlay */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/95 to-transparent" />
+                <div className="relative flex flex-col items-center gap-4 px-6 pb-8 pt-16">
+                  <div className="relative">
+                    <Lock className="h-8 w-8 text-slate-500" style={{ filter: "drop-shadow(0 0 8px rgba(100, 116, 139, 0.3))" }} />
+                  </div>
+                  <p className="text-center font-semibold text-slate-400">
+                    {t("locked")}
+                  </p>
+                  <button
+                    onClick={onUnlock}
+                    className="inline-flex items-center justify-center rounded-lg bg-cyan-500 px-6 py-3 text-base font-bold text-slate-950 transition-all hover:bg-cyan-400"
+                    style={{ boxShadow: "0 0 20px rgba(34, 211, 238, 0.3), 0 0 60px rgba(34, 211, 238, 0.1)" }}
+                  >
+                    {t("unlockCta")}
+                  </button>
+                </div>
               </div>
             </div>
-          </Card>
+          </div>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }

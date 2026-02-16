@@ -59,8 +59,8 @@ export function AuditStepper({
                     className={cn(
                       "h-0.5 w-6 lg:w-10",
                       index <= currentIndex
-                        ? "bg-indigo-500"
-                        : "bg-muted"
+                        ? "bg-cyan-500"
+                        : "bg-slate-700"
                     )}
                   />
                 )}
@@ -69,12 +69,12 @@ export function AuditStepper({
                     className={cn(
                       "flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-semibold transition-colors",
                       isCurrent
-                        ? "border-indigo-500 bg-indigo-500 text-white"
+                        ? "border-cyan-500 bg-cyan-500 text-slate-950"
                         : completed
                           ? "border-emerald-500 bg-emerald-500 text-white"
                           : isLocked
-                            ? "border-muted bg-muted text-muted-foreground"
-                            : "border-muted bg-background text-muted-foreground"
+                            ? "border-slate-700 bg-slate-800 text-slate-500"
+                            : "border-slate-700 bg-slate-900 text-slate-500"
                     )}
                   >
                     {isLocked ? (
@@ -89,8 +89,8 @@ export function AuditStepper({
                     className={cn(
                       "text-[10px] leading-tight max-w-[60px] text-center truncate",
                       isCurrent
-                        ? "text-indigo-700 dark:text-indigo-300 font-medium"
-                        : "text-muted-foreground"
+                        ? "text-cyan-400 font-medium"
+                        : "text-slate-600"
                     )}
                   >
                     {abbrev}

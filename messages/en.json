@@ -113,6 +113,79 @@
       "gdprCompliant": "GDPR compliant",
       "instantResult": "Instant results",
       "freeCheck": "Free check"
+    },
+    "scanner": {
+      "title": "Security Scanner",
+      "subtitle": "Enter your website for an instant risk assessment",
+      "placeholder": "www.your-company.com",
+      "cta": "START SCAN"
+    },
+    "guarantee": {
+      "title": "The NIS-2 Shield Guarantee",
+      "subtitle": "If we don't make you NIS-2 compliant in 30 days, you get:",
+      "moneyBack": "100% money back",
+      "compensation": "+ €5,000 for your time",
+      "fineCover": "+ We cover your fine (up to €50,000)",
+      "tagline": "Zero risk. All upside.",
+      "explanation": "We're so confident in our process that WE pay YOU if we fail. That's how seriously we take your protection."
+    },
+    "founder": {
+      "title": "Why I Built This",
+      "name": "Jonas Bohlender, Founder",
+      "story1": "I watched a friend's company almost go bankrupt because of a compliance fine.",
+      "story2": "They didn't know they fell under GDPR. €2M fine. 50 employees laid off.",
+      "story3": "That was the moment I built NIS-2 Shield.",
+      "story4": "No German company should lose millions because they 'didn't know' about a law.",
+      "mission": "We protect companies. That's our mission."
+    },
+    "pricing": {
+      "title": "Transparent Fixed Pricing",
+      "subtitle": "No hidden costs. No hourly rates. One price for full compliance.",
+      "oneTime": "One-time fixed price",
+      "custom": "Custom quote",
+      "recommended": "Recommended",
+      "starter": {
+        "name": "Starter",
+        "desc": "For smaller companies",
+        "f1": "<50 employees",
+        "f2": "<€5M revenue",
+        "f3": "Simple infrastructure",
+        "cta": "Get Started"
+      },
+      "professional": {
+        "name": "Professional",
+        "desc": "For most companies",
+        "f1": "50-250 employees",
+        "f2": "€5-50M revenue",
+        "f3": "Medium complexity",
+        "f4": "Cloud / SaaS",
+        "cta": "Protect Now"
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "desc": "For large organizations",
+        "f1": ">250 employees",
+        "f2": ">€50M revenue",
+        "f3": "Complex infrastructure",
+        "f4": "Critical infrastructure",
+        "cta": "Request Quote"
+      }
+    },
+    "booking": {
+      "title": "Protect Your Company NOW",
+      "subtitle": "The NIS-2 deadline has passed. Every day without compliance is a risk. Book your free 30-minute assessment now.",
+      "formTitle": "Book Free Assessment",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email Address",
+      "company": "Company",
+      "phone": "Phone (optional)",
+      "sizePlaceholder": "Company size...",
+      "employees": "Employees",
+      "submit": "BOOK FREE ASSESSMENT",
+      "noCommitment": "No commitment. We'll get back to you within 24 hours.",
+      "success": "Request received!",
+      "successHint": "We'll get back to you within 24 hours."
     }
   },
   "footer": {

@@ -26,10 +26,10 @@ const OPTIONS: {
     labelKey: "fulfilled",
     icon: CheckCircle,
     color: {
-      border: "border-emerald-500",
+      border: "border-emerald-500/50",
       bg: "bg-emerald-500/10",
-      text: "text-emerald-700 dark:text-emerald-400",
-      iconColor: "text-emerald-500",
+      text: "text-emerald-400",
+      iconColor: "text-emerald-400",
     },
   },
   {
@@ -37,10 +37,10 @@ const OPTIONS: {
     labelKey: "partial",
     icon: MinusCircle,
     color: {
-      border: "border-amber-500",
+      border: "border-amber-500/50",
       bg: "bg-amber-500/10",
-      text: "text-amber-700 dark:text-amber-400",
-      iconColor: "text-amber-500",
+      text: "text-amber-400",
+      iconColor: "text-amber-400",
     },
   },
   {
@@ -48,10 +48,10 @@ const OPTIONS: {
     labelKey: "notFulfilled",
     icon: XCircle,
     color: {
-      border: "border-rose-500",
+      border: "border-rose-500/50",
       bg: "bg-rose-500/10",
-      text: "text-rose-700 dark:text-rose-400",
-      iconColor: "text-rose-500",
+      text: "text-rose-400",
+      iconColor: "text-rose-400",
     },
   },
 ];
@@ -72,16 +72,16 @@ export function AnswerSelector({ value, onChange }: AnswerSelectorProps) {
             onClick={() => onChange(option.value)}
             className={cn(
               "flex items-center gap-2 rounded-lg border-2 px-4 py-2 text-sm font-medium transition-all",
-              "hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900",
               isSelected
                 ? cn(option.color.border, option.color.bg, option.color.text)
-                : "border-muted bg-background text-muted-foreground hover:border-muted-foreground/30"
+                : "border-slate-700/50 bg-slate-900/50 text-slate-400 hover:border-slate-600/50 hover:text-slate-300"
             )}
           >
             <Icon
               className={cn(
                 "h-4 w-4 shrink-0",
-                isSelected ? option.color.iconColor : "text-muted-foreground"
+                isSelected ? option.color.iconColor : "text-slate-400"
               )}
             />
             {t(option.labelKey)}

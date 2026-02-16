@@ -2,7 +2,6 @@
 
 import { useTranslations } from "next-intl";
 import { Info } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
@@ -27,15 +26,15 @@ const SEVERITY_STYLES: Record<
 > = {
   kritisch: {
     variant: "destructive",
-    className: "bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300 border-rose-200",
+    className: "bg-rose-500/10 text-rose-400 border-rose-500/30",
   },
   hoch: {
     variant: "default",
-    className: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-200",
+    className: "bg-amber-500/10 text-amber-400 border-amber-500/30",
   },
   mittel: {
     variant: "secondary",
-    className: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200",
+    className: "bg-slate-500/10 text-slate-400 border-slate-500/30",
   },
 };
 
@@ -56,10 +55,10 @@ export function QuestionCard({
   const severityStyle = SEVERITY_STYLES[question.severity];
 
   return (
-    <Card className="transition-shadow hover:shadow-md">
-      <CardContent className="space-y-4 pt-6">
+    <div className="rounded-xl border border-slate-700/30 bg-slate-900/60 backdrop-blur-sm transition-all hover:border-slate-600/50 hover:shadow-[0_0_20px_rgba(34,211,238,0.05)]">
+      <div className="space-y-4 p-6">
         <div className="flex items-start justify-between gap-3">
-          <h3 className="text-base font-medium leading-snug">
+          <h3 className="text-base font-medium leading-snug text-slate-200">
             {question.text[localeKey]}
           </h3>
           <div className="flex shrink-0 items-center gap-2">
@@ -74,7 +73,7 @@ export function QuestionCard({
                 <TooltipTrigger asChild>
                   <button
                     type="button"
-                    className="rounded-full p-1 text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="rounded-full p-1 text-slate-600 transition-colors hover:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/30"
                     aria-label={t("moreInfo")}
                   >
                     <Info className="h-4 w-4" />
@@ -82,7 +81,7 @@ export function QuestionCard({
                 </TooltipTrigger>
                 <TooltipContent
                   side="top"
-                  className="max-w-xs text-sm"
+                  className="max-w-xs border-slate-700/50 bg-slate-800 text-sm text-slate-300"
                   sideOffset={4}
                 >
                   {question.helpText[localeKey]}
@@ -92,12 +91,12 @@ export function QuestionCard({
           </div>
         </div>
 
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-slate-600">
           {t("legalRef")}: {question.legalReference}
         </p>
 
         <AnswerSelector value={answer} onChange={onAnswer} />
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

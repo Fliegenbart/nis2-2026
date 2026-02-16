@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowRight } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { NIS2Category, AnswerValue } from "@/data/nis2-framework";
 
@@ -38,24 +37,24 @@ export function NextBestAction({
   const actionLabel = hasAnyAnswers ? t("continueAudit") : t("startAudit");
 
   return (
-    <Card className="border-indigo-200 bg-indigo-50 dark:border-indigo-800 dark:bg-indigo-950">
-      <CardHeader>
-        <CardTitle className="text-indigo-900 dark:text-indigo-100">
+    <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 glow-cyan p-6">
+      <div className="mb-4">
+        <h3 className="text-white font-bold text-lg">
           {t("nextAction")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="mb-4 text-sm text-indigo-700 dark:text-indigo-300">
+        </h3>
+      </div>
+      <div>
+        <p className="mb-4 text-slate-400 text-sm">
           {t("nextActionDescription")}:{" "}
-          <span className="font-semibold">{categoryName}</span>
+          <span className="text-cyan-400 font-semibold">{categoryName}</span>
         </p>
-        <Button asChild className="bg-indigo-600 hover:bg-indigo-500 text-white">
+        <Button asChild className="bg-cyan-500 text-slate-950 font-bold hover:bg-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.2)]">
           <Link href={`/${locale}/audit/${auditId}/category/${targetCategory.id}`}>
             {actionLabel}
             <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
