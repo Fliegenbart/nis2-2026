@@ -7,6 +7,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("consultant")
+  companyName  String?
+  logoUrl      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  audits Audit[]
+}
+
 model Audit {
   id            String   @id @default(uuid())
   companyName   String?
@@ -18,8 +32,15 @@ model Audit {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  answers Answer[]
-  lead    Lead?
+  userId     String?
+  user       User?   @relation(fields: [userId], references: [id])
+  clientName String?
+  clientLogo String?
+
+  answers     Answer[]
+  lead        Lead?
+  evidences   Evidence[]
+  actionItems ActionItem[]
 }
 
 model Lead {
@@ -46,4 +67,34 @@ model Answer {
   audit   Audit  @relation(fields: [auditId], references: [id], onDelete: Cascade)
 
   @@unique([auditId, questionId])
+}
+
+model Evidence {
+  id         String   @id @default(uuid())
+  filename   String
+  url        String
+  mimeType   String?
+  uploadedAt DateTime @default(now())
+
+  auditId    String
+  audit      Audit  @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  questionId String
+
+  @@index([auditId, questionId])
+}
+
+model ActionItem {
+  id          String    @id @default(uuid())
+  title       String
+  description String?
+  priority    String    @default("medium")
+  status      String    @default("open")
+  dueDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  auditId    String
+  audit      Audit  @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  questionId String?
+  categoryId String?
 }

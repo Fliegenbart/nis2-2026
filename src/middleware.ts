@@ -7,10 +7,12 @@ const intlMiddleware = createMiddleware(routing);
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip auth check for login page, auth API, and static assets
+  // Skip auth check for login pages, auth APIs, and static assets
   if (
     pathname === "/login" ||
+    pathname === "/consultant/login" ||
     pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/api/consultant/auth") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/_vercel") ||
     pathname.includes(".")
@@ -18,7 +20,7 @@ export default function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check for auth cookie
+  // Check for site-wide auth cookie
   const authCookie = request.cookies.get("site-auth");
   if (!authCookie || authCookie.value !== "authenticated") {
     return NextResponse.redirect(new URL("/login", request.url));
@@ -26,6 +28,11 @@ export default function middleware(request: NextRequest) {
 
   // For API routes, just pass through (already authenticated)
   if (pathname.startsWith("/api")) {
+    return NextResponse.next();
+  }
+
+  // Consultant routes don't use i18n middleware
+  if (pathname.startsWith("/consultant")) {
     return NextResponse.next();
   }
 
