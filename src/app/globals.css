@@ -294,3 +294,179 @@
 .animate-float-delayed {
   animation: float-delayed 8s ease-in-out 2s infinite;
 }
+
+/* Radar sweep animation */
+@keyframes radar-sweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-radar-sweep {
+  animation: radar-sweep 4s linear infinite;
+}
+
+/* Glitch text effect */
+@keyframes glitch {
+  0%, 100% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+}
+
+.animate-glitch:hover {
+  animation: glitch 0.3s ease-in-out;
+}
+
+/* Scale pulse */
+@keyframes scale-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.animate-scale-pulse {
+  animation: scale-pulse 3s ease-in-out infinite;
+}
+
+/* Typewriter cursor blink */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* Glow pulse */
+@keyframes glow-pulse-cyan {
+  0%, 100% { box-shadow: 0 0 20px rgba(34, 211, 238, 0.15), 0 0 60px rgba(34, 211, 238, 0.05); }
+  50% { box-shadow: 0 0 30px rgba(34, 211, 238, 0.3), 0 0 80px rgba(34, 211, 238, 0.15); }
+}
+
+.animate-glow-pulse-cyan {
+  animation: glow-pulse-cyan 3s ease-in-out infinite;
+}
+
+@keyframes glow-pulse-rose {
+  0%, 100% { box-shadow: 0 0 20px rgba(251, 113, 133, 0.15), 0 0 60px rgba(251, 113, 133, 0.05); }
+  50% { box-shadow: 0 0 30px rgba(251, 113, 133, 0.3), 0 0 80px rgba(251, 113, 133, 0.15); }
+}
+
+.animate-glow-pulse-rose {
+  animation: glow-pulse-rose 3s ease-in-out infinite;
+}
+
+@keyframes glow-pulse-emerald {
+  0%, 100% { box-shadow: 0 0 20px rgba(52, 211, 153, 0.15), 0 0 60px rgba(52, 211, 153, 0.05); }
+  50% { box-shadow: 0 0 30px rgba(52, 211, 153, 0.3), 0 0 80px rgba(52, 211, 153, 0.15); }
+}
+
+.animate-glow-pulse-emerald {
+  animation: glow-pulse-emerald 3s ease-in-out infinite;
+}
+
+/* Slide in from sides */
+@keyframes slide-in-left {
+  from { transform: translateX(-40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slide-in-right {
+  from { transform: translateX(40px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.6s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.6s ease-out forwards;
+}
+
+/* Rotating border for hexagonal/radar feel */
+@keyframes rotate-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-rotate-slow {
+  animation: rotate-slow 20s linear infinite;
+}
+
+/* Grid line scan animation */
+@keyframes grid-scan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+.grid-scan-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(to bottom, transparent, rgba(34, 211, 238, 0.04), transparent);
+  animation: grid-scan 8s linear infinite;
+  pointer-events: none;
+}
+
+/* Floating particle dots */
+@keyframes particle-float-1 {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(10px, -15px); }
+  50% { transform: translate(-5px, -25px); }
+  75% { transform: translate(15px, -10px); }
+}
+
+@keyframes particle-float-2 {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-15px, -10px); }
+  50% { transform: translate(10px, -20px); }
+  75% { transform: translate(-10px, -5px); }
+}
+
+@keyframes particle-float-3 {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(8px, -20px); }
+  50% { transform: translate(-12px, -8px); }
+  75% { transform: translate(5px, -15px); }
+}
+
+.animate-particle-1 {
+  animation: particle-float-1 12s ease-in-out infinite;
+}
+
+.animate-particle-2 {
+  animation: particle-float-2 15s ease-in-out infinite;
+}
+
+.animate-particle-3 {
+  animation: particle-float-3 10s ease-in-out infinite;
+}
+
+/* Count-up flash when number changes */
+@keyframes number-flash {
+  0% { text-shadow: 0 0 20px currentColor; }
+  100% { text-shadow: none; }
+}
+
+.animate-number-flash {
+  animation: number-flash 0.5s ease-out;
+}
+
+/* Horizontal scan line */
+@keyframes h-scan {
+  0% { left: -20%; }
+  100% { left: 120%; }
+}
+
+.h-scan-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 80px;
+  background: linear-gradient(to right, transparent, rgba(34, 211, 238, 0.06), transparent);
+  animation: h-scan 6s linear infinite;
+  pointer-events: none;
+}

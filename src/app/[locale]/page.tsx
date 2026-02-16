@@ -4,10 +4,9 @@ import { useState, useRef } from "react";
 import { useLocale } from "next-intl";
 import { UrgencyBanner } from "@/components/landing/urgency-banner";
 import { HeroSection } from "@/components/landing/hero-section";
-import { SocialProofStats } from "@/components/landing/social-proof-stats";
 import { ProblemSection } from "@/components/landing/problem-section";
-import { LiabilityCalculator } from "@/components/landing/liability-calculator";
-import { GuaranteeSection } from "@/components/landing/guarantee-section";
+import { BulletproofViewport } from "@/components/landing/bulletproof-viewport";
+import { ScannerViewport } from "@/components/landing/scanner-viewport";
 import { FounderSection } from "@/components/landing/founder-section";
 import { PricingSection } from "@/components/landing/pricing-section";
 import { QuickCheck } from "@/components/landing/quick-check";
@@ -23,12 +22,12 @@ export default function LandingPage() {
   const [state, setState] = useState<LandingState>("hero");
   const [quickCheckAnswers, setQuickCheckAnswers] = useState<Record<string, AnswerValue>>({});
   const [showLeadCapture, setShowLeadCapture] = useState(false);
-  const quickCheckRef = useRef<HTMLDivElement>(null);
+  const scannerRef = useRef<HTMLDivElement>(null);
 
   function handleStartQuickCheck() {
     setState("quick-check");
     setTimeout(() => {
-      quickCheckRef.current?.scrollIntoView({ behavior: "smooth" });
+      scannerRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 100);
   }
 
@@ -36,7 +35,7 @@ export default function LandingPage() {
     setQuickCheckAnswers(answers);
     setState("results");
     setTimeout(() => {
-      quickCheckRef.current?.scrollIntoView({ behavior: "smooth" });
+      scannerRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 100);
   }
 
@@ -48,25 +47,25 @@ export default function LandingPage() {
     <>
       <UrgencyBanner />
       <HeroSection onStartQuickCheck={handleStartQuickCheck} />
-      <SocialProofStats locale={locale} />
       <ProblemSection />
-      <LiabilityCalculator />
-      <GuaranteeSection />
-      <FounderSection />
-      <PricingSection />
+      <BulletproofViewport />
 
-      <div ref={quickCheckRef}>
-        {state === "quick-check" && (
-          <QuickCheck onComplete={handleQuickCheckComplete} />
-        )}
-        {state === "results" && (
-          <QuickCheckResults
-            answers={quickCheckAnswers}
-            onUnlock={handleUnlockResults}
-          />
-        )}
+      <div ref={scannerRef}>
+        <ScannerViewport locale={locale}>
+          {state === "quick-check" && (
+            <QuickCheck onComplete={handleQuickCheckComplete} />
+          )}
+          {state === "results" && (
+            <QuickCheckResults
+              answers={quickCheckAnswers}
+              onUnlock={handleUnlockResults}
+            />
+          )}
+        </ScannerViewport>
       </div>
 
+      <FounderSection />
+      <PricingSection />
       <CTABookingSection />
 
       <LeadCaptureModal
