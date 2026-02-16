@@ -24,6 +24,54 @@
       "cta": "Free Quick Check",
       "ctaFull": "Start Full Audit"
     },
+    "complianceWidget": {
+      "title": "NIS-2 Compliance Status",
+      "cyberRisk": "Cyber Risk Management",
+      "incidentReporting": "Incident Reporting",
+      "securityDocs": "Security Documentation",
+      "supplyChain": "Supply Chain Security",
+      "overall": "Overall Compliance",
+      "critical": "CRITICAL — Fine Risk €10M"
+    },
+    "urgencyBanner": {
+      "text": "NIS-2 deadline has passed · Fines up to €10M are now enforceable",
+      "textShort": "NIS-2 deadline passed · €10M fines"
+    },
+    "socialProof": {
+      "scanned": "Companies scanned",
+      "atRisk": "At risk",
+      "secured": "Secured"
+    },
+    "problem": {
+      "title": "NIS-2 is complex and expensive",
+      "subtitle": "Most German SMEs don't even know they're affected.",
+      "deadline": {
+        "title": "Deadline has passed",
+        "description": "December 6, 2025 was the deadline. Thousands of companies are not compliant and risk immediate fines up to €10M or 2% of annual revenue."
+      },
+      "complex": {
+        "title": "Complex & time-consuming",
+        "description": "89 requirements must be met: Cyber Risk Management, Incident Response, Supply Chain Security, Documentation. Without expertise, this takes months."
+      },
+      "resources": {
+        "title": "No internal resources",
+        "description": "SMEs have no compliance department. External consultants charge €300+/hour. Big4 firms charge €100k+. The talent shortage makes it worse."
+      },
+      "affected": {
+        "title": "Does NIS-2 affect your company?",
+        "cloud": "Provide cloud services (SaaS, PaaS, IaaS)",
+        "datacenter": "Operate data centers or hosting",
+        "marketplace": "Operate online marketplaces or platforms",
+        "critical": "Critical infrastructure (energy, water, transport, health)",
+        "finance": "Provide financial services",
+        "digital": "Digital services for >50 employees or >€10M revenue"
+      },
+      "stats": {
+        "affected": "Affected",
+        "maxFine": "Max. Fine",
+        "reporting": "Reporting Duty"
+      }
+    },
     "calculator": {
       "title": "Liability Calculator",
       "subtitle": "Calculate your maximum fine risk under NIS2",
@@ -66,6 +114,28 @@
       "instantResult": "Instant results",
       "freeCheck": "Free check"
     }
+  },
+  "footer": {
+    "description": "Helping German businesses achieve EU compliance quickly and securely.",
+    "services": {
+      "title": "Services",
+      "nis2": "NIS-2 Compliance",
+      "gdpr": "GDPR Audit",
+      "aiAct": "AI Act Compliance"
+    },
+    "company": {
+      "title": "Company",
+      "about": "About Us",
+      "team": "Team",
+      "contact": "Contact"
+    },
+    "legal": {
+      "title": "Legal",
+      "imprint": "Imprint",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service"
+    },
+    "rights": "All rights reserved."
   },
   "dashboard": {
     "title": "NIS2 Compliance Dashboard",

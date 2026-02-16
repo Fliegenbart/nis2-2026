@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useLocale } from "next-intl";
+import { UrgencyBanner } from "@/components/landing/urgency-banner";
 import { HeroSection } from "@/components/landing/hero-section";
+import { SocialProofStats } from "@/components/landing/social-proof-stats";
+import { ProblemSection } from "@/components/landing/problem-section";
 import { LiabilityCalculator } from "@/components/landing/liability-calculator";
 import { QuickCheck } from "@/components/landing/quick-check";
 import { QuickCheckResults } from "@/components/landing/quick-check-results";
@@ -11,6 +15,7 @@ import type { AnswerValue } from "@/data/nis2-framework";
 type LandingState = "hero" | "quick-check" | "results";
 
 export default function LandingPage() {
+  const locale = useLocale();
   const [state, setState] = useState<LandingState>("hero");
   const [quickCheckAnswers, setQuickCheckAnswers] = useState<Record<string, AnswerValue>>({});
   const [showLeadCapture, setShowLeadCapture] = useState(false);
@@ -35,7 +40,10 @@ export default function LandingPage() {
 
   return (
     <>
+      <UrgencyBanner />
       <HeroSection onStartQuickCheck={handleStartQuickCheck} />
+      <SocialProofStats locale={locale} />
+      <ProblemSection />
       <LiabilityCalculator />
 
       <div ref={quickCheckRef}>

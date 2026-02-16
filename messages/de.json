@@ -24,6 +24,54 @@
       "cta": "Kostenloser Quick-Check",
       "ctaFull": "Vollständigen Audit starten"
     },
+    "complianceWidget": {
+      "title": "NIS-2 Compliance Status",
+      "cyberRisk": "Cyber Risk Management",
+      "incidentReporting": "Incident Reporting",
+      "securityDocs": "Security Documentation",
+      "supplyChain": "Supply Chain Security",
+      "overall": "Gesamt Compliance",
+      "critical": "KRITISCH — Bußgeldrisiko €10M"
+    },
+    "urgencyBanner": {
+      "text": "NIS-2 Frist abgelaufen · Bußgelder bis €10 Mio. drohen jetzt",
+      "textShort": "NIS-2 Frist abgelaufen · €10M Bußgeld"
+    },
+    "socialProof": {
+      "scanned": "Unternehmen geprüft",
+      "atRisk": "mit Risiko",
+      "secured": "geschützt"
+    },
+    "problem": {
+      "title": "NIS-2 ist komplex und teuer",
+      "subtitle": "Die meisten deutschen KMUs wissen nicht, dass sie betroffen sind.",
+      "deadline": {
+        "title": "Frist abgelaufen",
+        "description": "Der 6. Dezember 2025 war die Deadline. Tausende Unternehmen sind nicht compliant und riskieren sofortige Bußgelder bis €10M oder 2% des Jahresumsatzes."
+      },
+      "complex": {
+        "title": "Komplex & zeitaufwendig",
+        "description": "89 Requirements müssen erfüllt werden: Cyber Risk Management, Incident Response, Supply Chain Security, Dokumentation. Ohne Expertise dauert das Monate."
+      },
+      "resources": {
+        "title": "Keine internen Ressourcen",
+        "description": "KMUs haben keine Compliance-Abteilung. Externe Berater kosten €300+/Stunde. Big4 verlangen €100k+. Fachkräftemangel verschärft das Problem."
+      },
+      "affected": {
+        "title": "Betrifft Ihr Unternehmen NIS-2?",
+        "cloud": "Cloud-Services anbieten (SaaS, PaaS, IaaS)",
+        "datacenter": "Datacenter oder Hosting betreiben",
+        "marketplace": "Online-Marktplätze oder -Plattformen betreiben",
+        "critical": "Kritische Infrastruktur (Energie, Wasser, Transport, Gesundheit)",
+        "finance": "Finanzdienstleistungen anbieten",
+        "digital": "Digitale Services für >50 Mitarbeiter oder >€10M Umsatz"
+      },
+      "stats": {
+        "affected": "Betroffene",
+        "maxFine": "Max. Bußgeld",
+        "reporting": "Meldepflicht"
+      }
+    },
     "calculator": {
       "title": "Haftungsrechner",
       "subtitle": "Berechnen Sie Ihr maximales Bußgeldrisiko nach NIS2",
@@ -66,6 +114,28 @@
       "instantResult": "Sofortergebnis",
       "freeCheck": "Kostenloser Check"
     }
+  },
+  "footer": {
+    "description": "Wir bringen deutsche Unternehmen schnell und rechtssicher auf EU-Compliance.",
+    "services": {
+      "title": "Services",
+      "nis2": "NIS-2 Compliance",
+      "gdpr": "DSGVO Audit",
+      "aiAct": "AI Act Compliance"
+    },
+    "company": {
+      "title": "Unternehmen",
+      "about": "Über uns",
+      "team": "Team",
+      "contact": "Kontakt"
+    },
+    "legal": {
+      "title": "Rechtliches",
+      "imprint": "Impressum",
+      "privacy": "Datenschutz",
+      "terms": "AGB"
+    },
+    "rights": "Alle Rechte vorbehalten."
   },
   "dashboard": {
     "title": "NIS2 Compliance Dashboard",
