@@ -1,8 +1,38 @@
+import { NextRequest, NextResponse } from "next/server";
 import createMiddleware from "next-intl/middleware";
 import { routing } from "./i18n/routing";
 
-export default createMiddleware(routing);
+const intlMiddleware = createMiddleware(routing);
+
+export default function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Skip auth check for login page, auth API, and static assets
+  if (
+    pathname === "/login" ||
+    pathname.startsWith("/api/auth") ||
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/_vercel") ||
+    pathname.includes(".")
+  ) {
+    return NextResponse.next();
+  }
+
+  // Check for auth cookie
+  const authCookie = request.cookies.get("site-auth");
+  if (!authCookie || authCookie.value !== "authenticated") {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  // For API routes, just pass through (already authenticated)
+  if (pathname.startsWith("/api")) {
+    return NextResponse.next();
+  }
+
+  // For all other routes, apply i18n middleware
+  return intlMiddleware(request);
+}
 
 export const config = {
-  matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"],
+  matcher: ["/((?!_next|_vercel|.*\\..*).*)"],
 };
