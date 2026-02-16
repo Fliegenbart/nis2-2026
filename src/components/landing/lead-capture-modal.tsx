@@ -88,7 +88,7 @@ export function LeadCaptureModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md bg-slate-900 border-slate-700/50 text-white">
         <DialogHeader>
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/10 border border-cyan-500/20 glow-cyan">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/10 border border-cyan-500/20">
             <Mail className="h-6 w-6 text-cyan-400" />
           </div>
           <DialogTitle className="text-center text-white">{t("title")}</DialogTitle>
@@ -148,7 +148,6 @@ export function LeadCaptureModal({
           <button
             type="submit"
             className="inline-flex w-full items-center justify-center rounded-lg bg-cyan-500 px-5 py-2.5 text-sm font-bold text-slate-950 transition-all hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ boxShadow: "0 0 20px rgba(34, 211, 238, 0.3), 0 0 60px rgba(34, 211, 238, 0.1)" }}
             disabled={!consent || !email || isSubmitting}
           >
             {isSubmitting ? t("submitting") : t("submit")}

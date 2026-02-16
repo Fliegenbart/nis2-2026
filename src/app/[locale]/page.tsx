@@ -2,7 +2,6 @@
 
 import { useState, useRef } from "react";
 import { useLocale } from "next-intl";
-import { UrgencyBanner } from "@/components/landing/urgency-banner";
 import { HeroSection } from "@/components/landing/hero-section";
 import { ProblemSection } from "@/components/landing/problem-section";
 import { BulletproofViewport } from "@/components/landing/bulletproof-viewport";
@@ -45,7 +44,6 @@ export default function LandingPage() {
 
   return (
     <>
-      <UrgencyBanner />
       <HeroSection onStartQuickCheck={handleStartQuickCheck} />
       <ProblemSection />
       <BulletproofViewport />
