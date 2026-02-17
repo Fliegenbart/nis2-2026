@@ -36,10 +36,11 @@ function useCountUp(target: number, duration: number, start: boolean) {
 // ---------------------------------------------------------------------------
 interface ScannerViewportProps {
   locale: string;
+  onStartScan?: () => void;
   children?: React.ReactNode;
 }
 
-export function ScannerViewport({ locale, children }: ScannerViewportProps) {
+export function ScannerViewport({ locale, onStartScan, children }: ScannerViewportProps) {
   const t = useTranslations("landing.socialProof");
   const tScanner = useTranslations("landing.scanner");
   const statsRef = useRef<HTMLDivElement>(null);
@@ -120,7 +121,10 @@ export function ScannerViewport({ locale, children }: ScannerViewportProps) {
                 readOnly
                 className="flex-1 rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-200"
               />
-              <button className="rounded-lg bg-rose-500 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-rose-400">
+              <button
+                onClick={onStartScan}
+                className="rounded-lg bg-rose-500 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-rose-400"
+              >
                 {tScanner("cta")}
               </button>
             </div>

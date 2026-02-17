@@ -49,7 +49,7 @@ export default function LandingPage() {
       <BulletproofViewport />
 
       <div ref={scannerRef}>
-        <ScannerViewport locale={locale}>
+        <ScannerViewport locale={locale} onStartScan={handleStartQuickCheck}>
           {state === "quick-check" && (
             <QuickCheck onComplete={handleQuickCheckComplete} />
           )}
