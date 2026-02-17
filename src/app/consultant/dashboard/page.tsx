@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Shield,
@@ -12,7 +12,15 @@ import {
   CheckCircle2,
   Clock,
   ChevronRight,
+  ClipboardCheck,
+  RefreshCcw,
 } from "lucide-react";
+
+type UserRole = "admin" | "consultant" | "reviewer" | "client_readonly";
+
+type FindingStatus = "draft" | "in_review" | "approved" | "closed";
+
+type FindingSeverity = "critical" | "high" | "medium" | "low";
 
 interface AuditSummary {
   id: string;
@@ -32,10 +40,42 @@ interface AuditSummary {
   createdAt: string;
 }
 
+interface ReviewItem {
+  id: string;
+  title: string;
+  severity: FindingSeverity;
+  status: FindingStatus;
+  dueDate: string | null;
+  updatedAt: string;
+  reviewOwnerUserId: string | null;
+  reviewOwner?: {
+    id: string;
+    name: string;
+    role: UserRole;
+  } | null;
+  audit: {
+    id: string;
+    clientName: string | null;
+    companyName: string | null;
+  };
+  _count: {
+    comments: number;
+    actionItems: number;
+  };
+}
+
+interface ReviewSummary {
+  total: number;
+  inReview: number;
+  overdue: number;
+  criticalOpen: number;
+}
+
 interface User {
   id: string;
   name: string;
   email: string;
+  role: UserRole;
   companyName: string | null;
 }
 
@@ -90,16 +130,37 @@ function formatDate(dateStr: string): string {
   });
 }
 
+function formatDueDate(dateStr: string | null): string {
+  if (!dateStr) return "Keine Frist";
+  return formatDate(dateStr);
+}
+
+function isOverdue(item: ReviewItem): boolean {
+  if (!item.dueDate || item.status === "closed") return false;
+  return new Date(item.dueDate).getTime() < Date.now();
+}
+
 export default function ConsultantDashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [audits, setAudits] = useState<AuditSummary[]>([]);
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+  const [reviewSummary, setReviewSummary] = useState<ReviewSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isReviewLoading, setIsReviewLoading] = useState(false);
   const [showNewForm, setShowNewForm] = useState(false);
   const [newClientName, setNewClientName] = useState("");
   const [newCompanyName, setNewCompanyName] = useState("");
   const [newIndustry, setNewIndustry] = useState("");
   const [creating, setCreating] = useState(false);
+
+  const [reviewScope, setReviewScope] = useState<"my" | "queue" | "all">("all");
+  const [reviewStatus, setReviewStatus] = useState<"all" | FindingStatus>("all");
+  const [reviewSeverity, setReviewSeverity] = useState<"all" | FindingSeverity>("all");
+  const [reviewSort, setReviewSort] = useState<
+    "due_asc" | "due_desc" | "updated_desc" | "severity_desc"
+  >("due_asc");
+  const [reviewOverdueOnly, setReviewOverdueOnly] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -111,6 +172,7 @@ export default function ConsultantDashboardPage() {
         }
         const meData = await meRes.json();
         setUser(meData.user);
+        setReviewScope(meData.user?.role === "reviewer" ? "my" : "all");
 
         const dashRes = await fetch("/api/consultant/dashboard");
         if (dashRes.ok) {
@@ -125,6 +187,54 @@ export default function ConsultantDashboardPage() {
     }
     load();
   }, [router]);
+
+  async function loadReviews() {
+    if (!user) return;
+
+    const search = new URLSearchParams();
+    search.set("scope", reviewScope);
+    search.set("sort", reviewSort);
+    if (reviewStatus !== "all") search.set("status", reviewStatus);
+    if (reviewSeverity !== "all") search.set("severity", reviewSeverity);
+    if (reviewOverdueOnly) search.set("overdue", "1");
+
+    setIsReviewLoading(true);
+    try {
+      const res = await fetch(`/api/consultant/reviews?${search.toString()}`);
+      if (!res.ok) return;
+
+      const data = await res.json();
+      setReviews(data.reviews || []);
+      setReviewSummary(data.summary || null);
+    } finally {
+      setIsReviewLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadReviews();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    user?.id,
+    reviewScope,
+    reviewStatus,
+    reviewSeverity,
+    reviewSort,
+    reviewOverdueOnly,
+  ]);
+
+  async function handleClaimReview(item: ReviewItem) {
+    if (!user) return;
+    const res = await fetch(`/api/audit/${item.audit.id}/findings/${item.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reviewOwnerUserId: user.id }),
+    });
+
+    if (res.ok) {
+      await loadReviews();
+    }
+  }
 
   async function handleLogout() {
     await fetch("/api/consultant/auth/logout", { method: "POST" });
@@ -156,10 +266,16 @@ export default function ConsultantDashboardPage() {
     }
   }
 
+  const reviewScopeLabel = useMemo(() => {
+    if (reviewScope === "my") return "Meine Reviews";
+    if (reviewScope === "queue") return "Review Queue";
+    return "Alle Reviews";
+  }, [reviewScope]);
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-950">
-        <Shield className="h-12 w-12 text-indigo-600 animate-pulse" />
+        <Shield className="h-12 w-12 animate-pulse text-indigo-600" />
       </div>
     );
   }
@@ -175,7 +291,6 @@ export default function ConsultantDashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-950">
-      {/* Header */}
       <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-sm">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
@@ -190,7 +305,9 @@ export default function ConsultantDashboardPage() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-slate-400">{user?.name}</span>
+            <span className="text-sm text-slate-400">
+              {user?.name} ({user?.role})
+            </span>
             <button
               onClick={handleLogout}
               className="flex items-center gap-1.5 rounded-lg border border-slate-700 px-3 py-1.5 text-sm text-slate-400 transition hover:border-slate-600 hover:text-white"
@@ -203,7 +320,6 @@ export default function ConsultantDashboardPage() {
       </header>
 
       <main className="mx-auto max-w-7xl px-6 py-8">
-        {/* Stats Row */}
         <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-4">
           <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
             <div className="flex items-center gap-3">
@@ -237,7 +353,134 @@ export default function ConsultantDashboardPage() {
           </div>
         </div>
 
-        {/* Header + Add Button */}
+        {(user?.role === "reviewer" || user?.role === "admin") && (
+          <section className="mb-8 rounded-xl border border-slate-800 bg-slate-900 p-5">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-white">{reviewScopeLabel}</h2>
+                <p className="text-xs text-slate-400">
+                  {reviewSummary
+                    ? `${reviewSummary.total} Findings, ${reviewSummary.inReview} in Review, ${reviewSummary.overdue} overdue`
+                    : "Review-Daten werden geladen"}
+                </p>
+              </div>
+              <button
+                onClick={loadReviews}
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:border-slate-600"
+              >
+                <RefreshCcw className="h-3.5 w-3.5" />
+                Aktualisieren
+              </button>
+            </div>
+
+            <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+              <select
+                value={reviewScope}
+                onChange={(e) => setReviewScope(e.target.value as "my" | "queue" | "all")}
+                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-white"
+              >
+                <option value="my">Meine Reviews</option>
+                <option value="queue">Queue (unassigned)</option>
+                <option value="all">Alle</option>
+              </select>
+              <select
+                value={reviewStatus}
+                onChange={(e) => setReviewStatus(e.target.value as "all" | FindingStatus)}
+                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-white"
+              >
+                <option value="all">Status: alle</option>
+                <option value="draft">draft</option>
+                <option value="in_review">in_review</option>
+                <option value="approved">approved</option>
+                <option value="closed">closed</option>
+              </select>
+              <select
+                value={reviewSeverity}
+                onChange={(e) => setReviewSeverity(e.target.value as "all" | FindingSeverity)}
+                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-white"
+              >
+                <option value="all">Severity: alle</option>
+                <option value="critical">critical</option>
+                <option value="high">high</option>
+                <option value="medium">medium</option>
+                <option value="low">low</option>
+              </select>
+              <select
+                value={reviewSort}
+                onChange={(e) =>
+                  setReviewSort(
+                    e.target.value as "due_asc" | "due_desc" | "updated_desc" | "severity_desc"
+                  )
+                }
+                className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-white"
+              >
+                <option value="due_asc">Sort: due asc</option>
+                <option value="due_desc">Sort: due desc</option>
+                <option value="updated_desc">Sort: updated desc</option>
+                <option value="severity_desc">Sort: severity</option>
+              </select>
+              <label className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={reviewOverdueOnly}
+                  onChange={(e) => setReviewOverdueOnly(e.target.checked)}
+                />
+                Nur overdue
+              </label>
+            </div>
+
+            {isReviewLoading ? (
+              <p className="text-sm text-slate-400">Lade Reviews...</p>
+            ) : reviews.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-slate-700 px-4 py-6 text-sm text-slate-500">
+                Keine Findings für den aktuellen Filter.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {reviews.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-700 bg-slate-800/50 px-4 py-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-white">{item.title}</p>
+                      <p className="text-xs text-slate-400">
+                        {(item.audit.clientName || item.audit.companyName || "Audit") +
+                          ` | ${item.severity} | ${item.status} | ${formatDueDate(item.dueDate)}`}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Reviewer: {item.reviewOwner?.name || "unassigned"} | Kommentare: {item._count.comments} | Maßnahmen: {item._count.actionItems}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {user?.role === "reviewer" && item.reviewOwnerUserId !== user.id && (
+                        <button
+                          onClick={() => handleClaimReview(item)}
+                          className="rounded-md border border-violet-500/40 bg-violet-500/10 px-2.5 py-1 text-xs text-violet-300"
+                        >
+                          Übernehmen
+                        </button>
+                      )}
+                      <button
+                        onClick={() => router.push(`/de/audit/${item.audit.id}/dashboard`)}
+                        className="inline-flex items-center gap-1 rounded-md border border-slate-600 px-2.5 py-1 text-xs text-slate-200"
+                      >
+                        <ClipboardCheck className="h-3.5 w-3.5" />
+                        Öffnen
+                      </button>
+                      {isOverdue(item) && (
+                        <span className="rounded-full bg-rose-500/15 px-2 py-0.5 text-[11px] text-rose-300">
+                          overdue
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-white">Mandanten-Übersicht</h2>
           <button
@@ -249,7 +492,6 @@ export default function ConsultantDashboardPage() {
           </button>
         </div>
 
-        {/* New Client Form */}
         {showNewForm && (
           <form
             onSubmit={handleCreateAudit}
@@ -306,7 +548,6 @@ export default function ConsultantDashboardPage() {
           </form>
         )}
 
-        {/* Audit Cards Grid */}
         {audits.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-700 py-16">
             <Building2 className="mb-4 h-12 w-12 text-slate-600" />
@@ -351,12 +592,6 @@ export default function ConsultantDashboardPage() {
                     <span className="flex items-center gap-1">
                       <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
                       {audit.openActions} offen
-                    </span>
-                  )}
-                  {audit.doneActions > 0 && (
-                    <span className="flex items-center gap-1">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-slate-500" />
-                      {audit.doneActions} erledigt
                     </span>
                   )}
                   {audit.inReviewFindings > 0 && (

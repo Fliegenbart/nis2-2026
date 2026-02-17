@@ -14,6 +14,32 @@ import {
   parseOptionalDate,
 } from "@/lib/workflow";
 
+const FINDING_INCLUDE = {
+  createdBy: {
+    select: { id: true, name: true, role: true },
+  },
+  reviewedBy: {
+    select: { id: true, name: true, role: true },
+  },
+  reviewOwner: {
+    select: { id: true, name: true, role: true },
+  },
+  comments: {
+    include: {
+      authorUser: {
+        select: { id: true, name: true, role: true },
+      },
+    },
+    orderBy: { createdAt: "asc" },
+  },
+  _count: {
+    select: {
+      comments: true,
+      actionItems: true,
+    },
+  },
+} satisfies Prisma.FindingInclude;
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ auditId: string; findingId: string }> }
@@ -24,10 +50,12 @@ export async function PATCH(
     if (!access.ok) {
       return NextResponse.json({ error: access.error }, { status: access.status });
     }
+
     const user = await getSession(request);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
     const canWriteFinding = hasRole(user, CONSULTANT_WRITE_ROLES);
     const canReviewFinding = user.role === "reviewer" || user.role === "admin";
     if (!canWriteFinding && !canReviewFinding) {
@@ -36,7 +64,14 @@ export async function PATCH(
 
     const existing = await prisma.finding.findFirst({
       where: { id: findingId, auditId },
-      select: { id: true, status: true },
+      select: {
+        id: true,
+        status: true,
+        reviewOwnerUserId: true,
+        audit: {
+          select: { organizationId: true },
+        },
+      },
     });
     if (!existing) {
       return NextResponse.json({ error: "Finding not found" }, { status: 404 });
@@ -44,6 +79,7 @@ export async function PATCH(
 
     const body = await request.json();
     const updates: Prisma.FindingUncheckedUpdateInput = {};
+
     const hasReviewerRestrictedField =
       body.title !== undefined ||
       body.description !== undefined ||
@@ -54,7 +90,7 @@ export async function PATCH(
 
     if (!canWriteFinding && hasReviewerRestrictedField) {
       return NextResponse.json(
-        { error: "Reviewer may only update finding status" },
+        { error: "Reviewer may only update finding status or claim ownership" },
         { status: 403 }
       );
     }
@@ -93,10 +129,52 @@ export async function PATCH(
       updates.categoryId = body.categoryId || null;
     }
 
+    if (body.reviewOwnerUserId !== undefined) {
+      if (!body.reviewOwnerUserId) {
+        if (!canWriteFinding) {
+          return NextResponse.json(
+            { error: "Reviewer cannot clear review owner" },
+            { status: 403 }
+          );
+        }
+        updates.reviewOwnerUserId = null;
+      } else if (!canWriteFinding) {
+        if (body.reviewOwnerUserId !== user.id) {
+          return NextResponse.json(
+            { error: "Reviewer can only claim own assignments" },
+            { status: 403 }
+          );
+        }
+        updates.reviewOwnerUserId = user.id;
+      } else {
+        const owner = await prisma.user.findFirst({
+          where: {
+            id: body.reviewOwnerUserId,
+            ...(existing.audit.organizationId
+              ? { organizationId: existing.audit.organizationId }
+              : {}),
+            role: { in: ["reviewer", "admin"] },
+          },
+          select: { id: true },
+        });
+        if (!owner) {
+          return NextResponse.json(
+            { error: "Review owner not found" },
+            { status: 404 }
+          );
+        }
+        updates.reviewOwnerUserId = owner.id;
+      }
+    }
+
+    const statusChangeRequested =
+      body.status !== undefined && body.status !== existing.status;
+
     if (body.status !== undefined) {
       if (!isFindingStatus(body.status)) {
         return NextResponse.json({ error: "Invalid status" }, { status: 400 });
       }
+
       if (
         (body.status === "approved" || body.status === "closed") &&
         !canReviewFinding
@@ -112,12 +190,7 @@ export async function PATCH(
           { status: 403 }
         );
       }
-      if (canWriteFinding && !canReviewFinding && body.status === "closed") {
-        return NextResponse.json(
-          { error: "Only reviewers can close findings" },
-          { status: 403 }
-        );
-      }
+
       if (!canTransitionFindingStatus(existing.status, body.status)) {
         return NextResponse.json(
           {
@@ -133,13 +206,13 @@ export async function PATCH(
       if (body.status === "approved") {
         updates.approvedAt = now;
         updates.closedAt = null;
-        updates.reviewedByUserId = user?.id || null;
+        updates.reviewedByUserId = user.id;
       } else if (body.status === "closed") {
         updates.closedAt = now;
-        if (!existing.status || existing.status !== "approved") {
+        if (existing.status !== "approved") {
           updates.approvedAt = now;
         }
-        updates.reviewedByUserId = user?.id || null;
+        updates.reviewedByUserId = user.id;
       } else {
         updates.approvedAt = null;
         updates.closedAt = null;
@@ -148,38 +221,36 @@ export async function PATCH(
         }
       }
     }
-    if (!canWriteFinding && body.status === undefined) {
+
+    if (!canWriteFinding && body.status === undefined && body.reviewOwnerUserId === undefined) {
       return NextResponse.json(
-        { error: "status is required for reviewer updates" },
+        { error: "status or reviewOwnerUserId is required for reviewer updates" },
         { status: 400 }
       );
     }
 
-    const finding = await prisma.finding.update({
-      where: { id: findingId },
-      data: updates,
-      include: {
-        createdBy: {
-          select: { id: true, name: true, role: true },
-        },
-        reviewedBy: {
-          select: { id: true, name: true, role: true },
-        },
-        comments: {
-          include: {
-            authorUser: {
-              select: { id: true, name: true, role: true },
-            },
+    const note = typeof body.note === "string" ? body.note.trim() : null;
+
+    const finding = await prisma.$transaction(async (tx) => {
+      const updated = await tx.finding.update({
+        where: { id: findingId },
+        data: updates,
+        include: FINDING_INCLUDE,
+      });
+
+      if (statusChangeRequested && isFindingStatus(body.status)) {
+        await tx.findingStatusHistory.create({
+          data: {
+            findingId,
+            fromStatus: existing.status,
+            toStatus: body.status,
+            changedByUserId: user.id,
+            note: note || null,
           },
-          orderBy: { createdAt: "asc" },
-        },
-        _count: {
-          select: {
-            comments: true,
-            actionItems: true,
-          },
-        },
-      },
+        });
+      }
+
+      return updated;
     });
 
     return NextResponse.json({ finding });

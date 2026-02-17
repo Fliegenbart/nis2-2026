@@ -15,8 +15,10 @@ import type { Finding } from "@/hooks/use-audit";
 type SessionRole = "admin" | "consultant" | "reviewer" | "client_readonly" | null;
 
 interface FindingsBoardProps {
+  auditId: string;
   findings: Finding[];
   role: SessionRole;
+  currentUserId: string | null;
   onCreate: (finding: {
     title: string;
     severity?: Finding["severity"];
@@ -26,7 +28,10 @@ interface FindingsBoardProps {
   onUpdate: (
     findingId: string,
     updates: Partial<
-      Pick<Finding, "status" | "title" | "description" | "severity" | "dueDate">
+      Pick<
+        Finding,
+        "status" | "title" | "description" | "severity" | "dueDate" | "reviewOwnerUserId"
+      >
     >
   ) => Promise<boolean>;
   onDelete: (findingId: string) => Promise<boolean>;
@@ -67,8 +72,10 @@ function formatDueDate(value: string | null): string {
 }
 
 export function FindingsBoard({
+  auditId,
   findings,
   role,
+  currentUserId,
   onCreate,
   onUpdate,
   onDelete,
@@ -235,6 +242,9 @@ export function FindingsBoard({
                         <MessageSquare className="h-3.5 w-3.5" />
                         {item._count?.comments || item.comments.length} Kommentare
                       </span>
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">
+                        Reviewer: {item.reviewOwner?.name || "unassigned"}
+                      </span>
                       <span
                         className={`rounded-full px-2 py-0.5 ${
                           isOverdue(item)
@@ -271,6 +281,19 @@ export function FindingsBoard({
                           Freigeben
                         </button>
                       )}
+                      {canReview &&
+                        item.status === "in_review" &&
+                        currentUserId &&
+                        item.reviewOwnerUserId !== currentUserId && (
+                          <button
+                            onClick={() =>
+                              onUpdate(item.id, { reviewOwnerUserId: currentUserId })
+                            }
+                            className="rounded-md border border-violet-200 bg-violet-50 px-2 py-1 text-xs font-medium text-violet-700"
+                          >
+                            Übernehmen
+                          </button>
+                        )}
                       {canReview && item.status === "approved" && (
                         <button
                           onClick={() => handleStatusChange(item, "closed")}
@@ -346,6 +369,17 @@ export function FindingsBoard({
           Read-only Modus
         </p>
       )}
+      <p className="mt-2 text-xs text-slate-400">
+        Audit-Trail Export:{" "}
+        <a
+          className="underline"
+          href={`/api/audit/${auditId}/findings/history?format=csv`}
+          target="_blank"
+          rel="noreferrer"
+        >
+          CSV herunterladen
+        </a>
+      </p>
     </section>
   );
 }

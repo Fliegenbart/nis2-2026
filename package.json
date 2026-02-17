@@ -8,7 +8,8 @@
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint",
-    "test:unit": "tsx --test tests/**/*.test.ts"
+    "test:unit": "tsx --test tests/**/*.test.ts",
+    "escalations:run": "tsx scripts/run-overdue-escalations.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

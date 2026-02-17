@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ensureAuditAccess } from "@/lib/audit-access";
 import {
@@ -13,6 +14,32 @@ import {
   parseOptionalDate,
 } from "@/lib/workflow";
 
+const FINDING_INCLUDE = {
+  createdBy: {
+    select: { id: true, name: true, role: true },
+  },
+  reviewedBy: {
+    select: { id: true, name: true, role: true },
+  },
+  reviewOwner: {
+    select: { id: true, name: true, role: true },
+  },
+  comments: {
+    include: {
+      authorUser: {
+        select: { id: true, name: true, role: true },
+      },
+    },
+    orderBy: { createdAt: "asc" },
+  },
+  _count: {
+    select: {
+      comments: true,
+      actionItems: true,
+    },
+  },
+} satisfies Prisma.FindingInclude;
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ auditId: string }> }
@@ -26,29 +53,13 @@ export async function GET(
 
     const findings = await prisma.finding.findMany({
       where: { auditId },
-      include: {
-        createdBy: {
-          select: { id: true, name: true, role: true },
-        },
-        reviewedBy: {
-          select: { id: true, name: true, role: true },
-        },
-        comments: {
-          include: {
-            authorUser: {
-              select: { id: true, name: true, role: true },
-            },
-          },
-          orderBy: { createdAt: "asc" },
-        },
-        _count: {
-          select: {
-            comments: true,
-            actionItems: true,
-          },
-        },
-      },
-      orderBy: [{ status: "asc" }, { severity: "asc" }, { createdAt: "desc" }],
+      include: FINDING_INCLUDE,
+      orderBy: [
+        { status: "asc" },
+        { dueDate: "asc" },
+        { severity: "asc" },
+        { createdAt: "desc" },
+      ],
     });
 
     return NextResponse.json({ findings });
@@ -70,6 +81,7 @@ export async function POST(
     if (!access.ok) {
       return NextResponse.json({ error: access.error }, { status: access.status });
     }
+
     const user = await getSession(request);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -118,46 +130,63 @@ export async function POST(
 
     const audit = await prisma.audit.findUnique({
       where: { id: auditId },
-      select: { id: true },
+      select: { id: true, organizationId: true },
     });
     if (!audit) {
       return NextResponse.json({ error: "Audit not found" }, { status: 404 });
     }
 
-    const finding = await prisma.finding.create({
-      data: {
-        auditId,
-        title,
-        description: body.description || null,
-        severity,
-        status,
-        dueDate: dueDate ?? null,
-        questionId: body.questionId || null,
-        categoryId: body.categoryId || null,
-        createdByUserId: user?.id || null,
-      },
-      include: {
-        createdBy: {
-          select: { id: true, name: true, role: true },
+    let reviewOwnerUserId: string | null = null;
+    if (body.reviewOwnerUserId) {
+      const owner = await prisma.user.findFirst({
+        where: {
+          id: body.reviewOwnerUserId,
+          ...(audit.organizationId
+            ? { organizationId: audit.organizationId }
+            : {}),
+          role: { in: ["reviewer", "admin"] },
         },
-        reviewedBy: {
-          select: { id: true, name: true, role: true },
+        select: { id: true },
+      });
+      if (!owner) {
+        return NextResponse.json(
+          { error: "Review owner not found" },
+          { status: 404 }
+        );
+      }
+      reviewOwnerUserId = owner.id;
+    }
+
+    const finding = await prisma.$transaction(async (tx) => {
+      const created = await tx.finding.create({
+        data: {
+          auditId,
+          title,
+          description: body.description || null,
+          severity,
+          status,
+          dueDate: dueDate ?? null,
+          questionId: body.questionId || null,
+          categoryId: body.categoryId || null,
+          createdByUserId: user.id,
+          reviewOwnerUserId,
         },
-        comments: {
-          include: {
-            authorUser: {
-              select: { id: true, name: true, role: true },
-            },
-          },
-          orderBy: { createdAt: "asc" },
+      });
+
+      await tx.findingStatusHistory.create({
+        data: {
+          findingId: created.id,
+          fromStatus: null,
+          toStatus: status,
+          changedByUserId: user.id,
+          note: "Finding created",
         },
-        _count: {
-          select: {
-            comments: true,
-            actionItems: true,
-          },
-        },
-      },
+      });
+
+      return tx.finding.findUnique({
+        where: { id: created.id },
+        include: FINDING_INCLUDE,
+      });
     });
 
     return NextResponse.json({ finding }, { status: 201 });

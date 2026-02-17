@@ -76,6 +76,7 @@ export interface Finding {
   closedAt: string | null;
   questionId: string | null;
   categoryId: string | null;
+  reviewOwnerUserId: string | null;
   createdAt: string;
   updatedAt: string;
   createdBy?: {
@@ -84,6 +85,11 @@ export interface Finding {
     role: string;
   } | null;
   reviewedBy?: {
+    id: string;
+    name: string;
+    role: string;
+  } | null;
+  reviewOwner?: {
     id: string;
     name: string;
     role: string;
@@ -391,6 +397,7 @@ export function useAudit(auditId: string) {
       dueDate?: string | null;
       questionId?: string;
       categoryId?: string;
+      reviewOwnerUserId?: string;
     }): Promise<Finding | null> => {
       try {
         const res = await fetch(`/api/audit/${auditId}/findings`, {
@@ -424,6 +431,7 @@ export function useAudit(auditId: string) {
           | "dueDate"
           | "questionId"
           | "categoryId"
+          | "reviewOwnerUserId"
         >
       >
     ): Promise<boolean> => {

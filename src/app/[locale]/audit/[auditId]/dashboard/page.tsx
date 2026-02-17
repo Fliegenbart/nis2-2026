@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
-import { Shield, Download } from "lucide-react";
+import { Shield, Download, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ComplianceScoreChart } from "@/components/dashboard/compliance-score-chart";
 import { LiabilityTicker } from "@/components/dashboard/liability-ticker";
@@ -16,6 +16,10 @@ import Link from "next/link";
 import { FindingsBoard } from "@/components/audit/findings-board";
 
 type SessionRole = "admin" | "consultant" | "reviewer" | "client_readonly" | null;
+interface SessionUserLite {
+  id: string;
+  role: SessionRole;
+}
 
 export default function DashboardPage() {
   const params = useParams();
@@ -33,7 +37,7 @@ export default function DashboardPage() {
     addFindingComment,
   } = useAudit(auditId);
   const { overallScore, categoryScores } = useScoring(answers);
-  const [sessionRole, setSessionRole] = useState<SessionRole>(null);
+  const [sessionUser, setSessionUser] = useState<SessionUserLite | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -44,7 +48,10 @@ export default function DashboardPage() {
         if (!res.ok) return;
         const data = await res.json();
         if (!cancelled) {
-          setSessionRole((data.user?.role as SessionRole) || null);
+          setSessionUser({
+            id: data.user?.id || "",
+            role: (data.user?.role as SessionRole) || null,
+          });
         }
       } catch {
         // fallback to null role
@@ -82,12 +89,20 @@ export default function DashboardPage() {
               <p className="text-slate-400 mt-1">{auditData.companyName}</p>
             )}
           </div>
-          <Link href={`/${locale}/audit/${auditId}/report`}>
-            <Button variant="outline" className="gap-2 border-slate-700 text-slate-400 hover:text-white hover:border-cyan-500/40">
-              <Download className="h-4 w-4" />
-              {t("downloadReport")}
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <a href={`/api/audit/${auditId}/findings/history?format=csv`} target="_blank" rel="noreferrer">
+              <Button variant="outline" className="gap-2 border-slate-700 text-slate-400 hover:text-white hover:border-cyan-500/40">
+                <History className="h-4 w-4" />
+                History CSV
+              </Button>
+            </a>
+            <Link href={`/${locale}/audit/${auditId}/report`}>
+              <Button variant="outline" className="gap-2 border-slate-700 text-slate-400 hover:text-white hover:border-cyan-500/40">
+                <Download className="h-4 w-4" />
+                {t("downloadReport")}
+              </Button>
+            </Link>
+          </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3 mb-8">
@@ -116,8 +131,10 @@ export default function DashboardPage() {
         />
 
         <FindingsBoard
+          auditId={auditId}
           findings={findings}
-          role={sessionRole}
+          role={sessionUser?.role || null}
+          currentUserId={sessionUser?.id || null}
           onCreate={addFinding}
           onUpdate={updateFinding}
           onDelete={deleteFinding}

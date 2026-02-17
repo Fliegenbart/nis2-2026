@@ -79,12 +79,14 @@ model User {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  organization     Organization?    @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  audits           Audit[]
-  createdFindings  Finding[]        @relation("FindingCreatedBy")
-  reviewedFindings Finding[]        @relation("FindingReviewedBy")
-  findingComments  FindingComment[] @relation("FindingCommentAuthor")
-  ownedActionItems ActionItem[]     @relation("ActionOwner")
+  organization         Organization?          @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  audits               Audit[]
+  createdFindings      Finding[]              @relation("FindingCreatedBy")
+  reviewedFindings     Finding[]              @relation("FindingReviewedBy")
+  reviewOwnedFindings  Finding[]              @relation("FindingReviewOwner")
+  findingComments      FindingComment[]       @relation("FindingCommentAuthor")
+  findingStatusChanges FindingStatusHistory[] @relation("FindingStatusChangedBy")
+  ownedActionItems     ActionItem[]           @relation("ActionOwner")
 }
 
 model Audit {
@@ -190,30 +192,35 @@ model ActionItem {
 }
 
 model Finding {
-  id               String          @id @default(uuid())
-  title            String
-  description      String?
-  severity         FindingSeverity @default(medium)
-  status           FindingStatus   @default(draft)
-  dueDate          DateTime?
-  approvedAt       DateTime?
-  closedAt         DateTime?
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
-  auditId          String
-  questionId       String?
-  categoryId       String?
-  createdByUserId  String?
-  reviewedByUserId String?
+  id                String          @id @default(uuid())
+  title             String
+  description       String?
+  severity          FindingSeverity @default(medium)
+  status            FindingStatus   @default(draft)
+  dueDate           DateTime?
+  approvedAt        DateTime?
+  closedAt          DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  auditId           String
+  questionId        String?
+  categoryId        String?
+  createdByUserId   String?
+  reviewedByUserId  String?
+  reviewOwnerUserId String?
 
-  audit       Audit            @relation(fields: [auditId], references: [id], onDelete: Cascade)
-  createdBy   User?            @relation("FindingCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
-  reviewedBy  User?            @relation("FindingReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
-  comments    FindingComment[]
-  actionItems ActionItem[]
+  audit            Audit                    @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  createdBy        User?                    @relation("FindingCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  reviewedBy       User?                    @relation("FindingReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  reviewOwner      User?                    @relation("FindingReviewOwner", fields: [reviewOwnerUserId], references: [id], onDelete: SetNull)
+  comments         FindingComment[]
+  actionItems      ActionItem[]
+  statusHistory    FindingStatusHistory[]
+  escalationEvents FindingEscalationEvent[]
 
   @@index([auditId, status])
   @@index([auditId, severity])
+  @@index([reviewOwnerUserId, status])
 }
 
 model FindingComment {
@@ -229,6 +236,43 @@ model FindingComment {
   authorUser User?   @relation("FindingCommentAuthor", fields: [authorUserId], references: [id], onDelete: SetNull)
 
   @@index([findingId, createdAt])
+}
+
+model FindingStatusHistory {
+  id              String         @id @default(uuid())
+  findingId       String
+  fromStatus      FindingStatus?
+  toStatus        FindingStatus
+  changedByUserId String?
+  note            String?
+  createdAt       DateTime       @default(now())
+
+  finding   Finding @relation(fields: [findingId], references: [id], onDelete: Cascade)
+  changedBy User?   @relation("FindingStatusChangedBy", fields: [changedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([findingId, createdAt])
+  @@index([createdAt])
+}
+
+model FindingEscalationEvent {
+  id              String        @id @default(uuid())
+  findingId       String
+  channel         String
+  deliveryTarget  String
+  escalationDate  DateTime
+  escalatedAt     DateTime      @default(now())
+  statusSnapshot  FindingStatus
+  dueDateSnapshot DateTime?
+  success         Boolean       @default(false)
+  responseStatus  Int?
+  errorMessage    String?
+  payload         Json
+  fingerprint     String        @unique
+
+  finding Finding @relation(fields: [findingId], references: [id], onDelete: Cascade)
+
+  @@index([findingId, escalatedAt])
+  @@index([escalationDate])
 }
 
 model Client {
