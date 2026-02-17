@@ -51,6 +51,50 @@ export interface ActionItem {
   createdAt: string;
 }
 
+export interface FindingComment {
+  id: string;
+  body: string;
+  authorRole: "consultant" | "reviewer" | "client";
+  authorName: string | null;
+  createdAt: string;
+  authorUserId: string | null;
+  authorUser?: {
+    id: string;
+    name: string;
+    role: string;
+  } | null;
+}
+
+export interface Finding {
+  id: string;
+  title: string;
+  description: string | null;
+  severity: "critical" | "high" | "medium" | "low";
+  status: "draft" | "in_review" | "approved" | "closed";
+  dueDate: string | null;
+  approvedAt: string | null;
+  closedAt: string | null;
+  questionId: string | null;
+  categoryId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  createdBy?: {
+    id: string;
+    name: string;
+    role: string;
+  } | null;
+  reviewedBy?: {
+    id: string;
+    name: string;
+    role: string;
+  } | null;
+  comments: FindingComment[];
+  _count?: {
+    comments: number;
+    actionItems: number;
+  };
+}
+
 const DEBOUNCE_MS = 2000;
 
 export function useAudit(auditId: string) {
@@ -60,6 +104,7 @@ export function useAudit(auditId: string) {
   const [auditData, setAuditData] = useState<AuditData | null>(null);
   const [evidences, setEvidences] = useState<Evidence[]>([]);
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
+  const [findings, setFindings] = useState<Finding[]>([]);
 
   const pendingChangesRef = useRef<Map<string, PendingChange>>(new Map());
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -72,10 +117,11 @@ export function useAudit(auditId: string) {
       try {
         setIsLoading(true);
 
-        const [auditRes, evidenceRes, actionsRes] = await Promise.all([
+        const [auditRes, evidenceRes, actionsRes, findingsRes] = await Promise.all([
           fetch(`/api/audit/${auditId}`),
           fetch(`/api/audit/${auditId}/evidence`),
           fetch(`/api/audit/${auditId}/actions`),
+          fetch(`/api/audit/${auditId}/findings`),
         ]);
 
         if (!auditRes.ok) throw new Error("Failed to load audit");
@@ -109,6 +155,11 @@ export function useAudit(auditId: string) {
         if (actionsRes.ok) {
           const actData = await actionsRes.json();
           if (!cancelled) setActionItems(actData.actionItems || []);
+        }
+
+        if (findingsRes.ok) {
+          const findingData = await findingsRes.json();
+          if (!cancelled) setFindings(findingData.findings || []);
         }
       } catch (error) {
         console.error("Error loading audit:", error);
@@ -330,6 +381,126 @@ export function useAudit(auditId: string) {
     [auditId]
   );
 
+  // Finding workflow functions
+  const addFinding = useCallback(
+    async (finding: {
+      title: string;
+      description?: string;
+      severity?: Finding["severity"];
+      status?: Finding["status"];
+      dueDate?: string | null;
+      questionId?: string;
+      categoryId?: string;
+    }): Promise<Finding | null> => {
+      try {
+        const res = await fetch(`/api/audit/${auditId}/findings`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(finding),
+        });
+        if (!res.ok) return null;
+
+        const data = await res.json();
+        const created = data.finding as Finding;
+        setFindings((prev) => [created, ...prev]);
+        return created;
+      } catch {
+        return null;
+      }
+    },
+    [auditId]
+  );
+
+  const updateFinding = useCallback(
+    async (
+      findingId: string,
+      updates: Partial<
+        Pick<
+          Finding,
+          | "title"
+          | "description"
+          | "severity"
+          | "status"
+          | "dueDate"
+          | "questionId"
+          | "categoryId"
+        >
+      >
+    ): Promise<boolean> => {
+      try {
+        const res = await fetch(`/api/audit/${auditId}/findings/${findingId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updates),
+        });
+        if (!res.ok) return false;
+
+        const data = await res.json();
+        const updated = data.finding as Finding;
+        setFindings((prev) =>
+          prev.map((item) => (item.id === findingId ? updated : item))
+        );
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [auditId]
+  );
+
+  const deleteFinding = useCallback(
+    async (findingId: string): Promise<boolean> => {
+      try {
+        const res = await fetch(`/api/audit/${auditId}/findings/${findingId}`, {
+          method: "DELETE",
+        });
+        if (!res.ok) return false;
+
+        setFindings((prev) => prev.filter((item) => item.id !== findingId));
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [auditId]
+  );
+
+  const addFindingComment = useCallback(
+    async (findingId: string, message: string): Promise<FindingComment | null> => {
+      try {
+        const res = await fetch(
+          `/api/audit/${auditId}/findings/${findingId}/comments`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message }),
+          }
+        );
+        if (!res.ok) return null;
+
+        const data = await res.json();
+        const comment = data.comment as FindingComment;
+        setFindings((prev) =>
+          prev.map((item) => {
+            if (item.id !== findingId) return item;
+            return {
+              ...item,
+              comments: [...item.comments, comment],
+              _count: {
+                comments: (item._count?.comments || 0) + 1,
+                actionItems: item._count?.actionItems || 0,
+              },
+            };
+          })
+        );
+        return comment;
+      } catch {
+        return null;
+      }
+    },
+    [auditId]
+  );
+
   return {
     answers,
     setAnswer,
@@ -338,10 +509,15 @@ export function useAudit(auditId: string) {
     auditData,
     evidences,
     actionItems,
+    findings,
     uploadEvidence,
     removeEvidence,
     addActionItem,
     updateActionItem,
     deleteActionItem,
+    addFinding,
+    updateFinding,
+    deleteFinding,
+    addFindingComment,
   };
 }

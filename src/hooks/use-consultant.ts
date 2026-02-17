@@ -21,6 +21,10 @@ interface AuditSummary {
   totalQuestions: number;
   openActions: number;
   doneActions: number;
+  openFindings: number;
+  inReviewFindings: number;
+  overdueFindings: number;
+  criticalOpenFindings: number;
   updatedAt: string;
   createdAt: string;
 }

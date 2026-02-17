@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ensureAuditAccess } from "@/lib/audit-access";
-import { getSession } from "@/lib/auth";
+import {
+  CONSULTANT_WRITE_ROLES,
+  getSession,
+  hasRole,
+} from "@/lib/auth";
 import {
   canTransitionFindingStatus,
   isFindingSeverity,
@@ -16,9 +20,18 @@ export async function PATCH(
 ) {
   try {
     const { auditId, findingId } = await params;
-    const access = await ensureAuditAccess(request, auditId, "write");
+    const access = await ensureAuditAccess(request, auditId, "read");
     if (!access.ok) {
       return NextResponse.json({ error: access.error }, { status: access.status });
+    }
+    const user = await getSession(request);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const canWriteFinding = hasRole(user, CONSULTANT_WRITE_ROLES);
+    const canReviewFinding = user.role === "reviewer" || user.role === "admin";
+    if (!canWriteFinding && !canReviewFinding) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const existing = await prisma.finding.findFirst({
@@ -31,6 +44,20 @@ export async function PATCH(
 
     const body = await request.json();
     const updates: Prisma.FindingUncheckedUpdateInput = {};
+    const hasReviewerRestrictedField =
+      body.title !== undefined ||
+      body.description !== undefined ||
+      body.severity !== undefined ||
+      body.questionId !== undefined ||
+      body.categoryId !== undefined ||
+      body.dueDate !== undefined;
+
+    if (!canWriteFinding && hasReviewerRestrictedField) {
+      return NextResponse.json(
+        { error: "Reviewer may only update finding status" },
+        { status: 403 }
+      );
+    }
 
     if (body.title !== undefined) {
       if (typeof body.title !== "string" || !body.title.trim()) {
@@ -70,6 +97,27 @@ export async function PATCH(
       if (!isFindingStatus(body.status)) {
         return NextResponse.json({ error: "Invalid status" }, { status: 400 });
       }
+      if (
+        (body.status === "approved" || body.status === "closed") &&
+        !canReviewFinding
+      ) {
+        return NextResponse.json(
+          { error: "Only reviewers can approve or close findings" },
+          { status: 403 }
+        );
+      }
+      if (!canWriteFinding && body.status === "draft") {
+        return NextResponse.json(
+          { error: "Reviewer cannot move findings to draft" },
+          { status: 403 }
+        );
+      }
+      if (canWriteFinding && !canReviewFinding && body.status === "closed") {
+        return NextResponse.json(
+          { error: "Only reviewers can close findings" },
+          { status: 403 }
+        );
+      }
       if (!canTransitionFindingStatus(existing.status, body.status)) {
         return NextResponse.json(
           {
@@ -79,7 +127,6 @@ export async function PATCH(
         );
       }
 
-      const user = await getSession(request);
       const now = new Date();
       updates.status = body.status;
 
@@ -96,8 +143,16 @@ export async function PATCH(
       } else {
         updates.approvedAt = null;
         updates.closedAt = null;
-        updates.reviewedByUserId = null;
+        if (canReviewFinding) {
+          updates.reviewedByUserId = null;
+        }
       }
+    }
+    if (!canWriteFinding && body.status === undefined) {
+      return NextResponse.json(
+        { error: "status is required for reviewer updates" },
+        { status: 400 }
+      );
     }
 
     const finding = await prisma.finding.update({
@@ -117,6 +172,12 @@ export async function PATCH(
             },
           },
           orderBy: { createdAt: "asc" },
+        },
+        _count: {
+          select: {
+            comments: true,
+            actionItems: true,
+          },
         },
       },
     });

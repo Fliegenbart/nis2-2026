@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import { Shield, Download } from "lucide-react";
@@ -12,14 +13,49 @@ import { useAudit } from "@/hooks/use-audit";
 import { useScoring } from "@/hooks/use-scoring";
 import { NIS2_CATEGORIES } from "@/data/nis2-framework";
 import Link from "next/link";
+import { FindingsBoard } from "@/components/audit/findings-board";
+
+type SessionRole = "admin" | "consultant" | "reviewer" | "client_readonly" | null;
 
 export default function DashboardPage() {
   const params = useParams();
   const auditId = params.auditId as string;
   const locale = useLocale();
   const t = useTranslations("dashboard");
-  const { answers, isLoading, auditData } = useAudit(auditId);
+  const {
+    answers,
+    isLoading,
+    auditData,
+    findings,
+    addFinding,
+    updateFinding,
+    deleteFinding,
+    addFindingComment,
+  } = useAudit(auditId);
   const { overallScore, categoryScores } = useScoring(answers);
+  const [sessionRole, setSessionRole] = useState<SessionRole>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadRole() {
+      try {
+        const res = await fetch("/api/consultant/auth/me");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled) {
+          setSessionRole((data.user?.role as SessionRole) || null);
+        }
+      } catch {
+        // fallback to null role
+      }
+    }
+
+    loadRole();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (isLoading) {
     return (
@@ -77,6 +113,15 @@ export default function DashboardPage() {
           categories={NIS2_CATEGORIES}
           categoryScores={categoryScores}
           auditId={auditId}
+        />
+
+        <FindingsBoard
+          findings={findings}
+          role={sessionRole}
+          onCreate={addFinding}
+          onUpdate={updateFinding}
+          onDelete={deleteFinding}
+          onComment={addFindingComment}
         />
       </div>
     </div>

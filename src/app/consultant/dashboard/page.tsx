@@ -24,6 +24,10 @@ interface AuditSummary {
   totalQuestions: number;
   openActions: number;
   doneActions: number;
+  openFindings: number;
+  inReviewFindings: number;
+  overdueFindings: number;
+  criticalOpenFindings: number;
   updatedAt: string;
   createdAt: string;
 }
@@ -166,6 +170,8 @@ export default function ConsultantDashboardPage() {
       ? Math.round(audits.reduce((s, a) => s + a.overallScore, 0) / audits.length)
       : 0;
   const totalOpenActions = audits.reduce((s, a) => s + a.openActions, 0);
+  const totalInReviewFindings = audits.reduce((s, a) => s + a.inReviewFindings, 0);
+  const totalOverdueFindings = audits.reduce((s, a) => s + a.overdueFindings, 0);
 
   return (
     <div className="min-h-screen bg-slate-950">
@@ -198,7 +204,7 @@ export default function ConsultantDashboardPage() {
 
       <main className="mx-auto max-w-7xl px-6 py-8">
         {/* Stats Row */}
-        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-4">
           <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
             <div className="flex items-center gap-3">
               <Building2 className="h-5 w-5 text-indigo-400" />
@@ -219,6 +225,15 @@ export default function ConsultantDashboardPage() {
               <span className="text-sm text-slate-400">Offene Maßnahmen</span>
             </div>
             <p className="mt-2 text-3xl font-bold text-white">{totalOpenActions}</p>
+          </div>
+          <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-5 w-5 text-cyan-400" />
+              <span className="text-sm text-slate-400">In Review / Overdue</span>
+            </div>
+            <p className="mt-2 text-3xl font-bold text-white">
+              {totalInReviewFindings} / {totalOverdueFindings}
+            </p>
           </div>
         </div>
 
@@ -342,6 +357,18 @@ export default function ConsultantDashboardPage() {
                     <span className="flex items-center gap-1">
                       <CheckCircle2 className="h-3.5 w-3.5 text-slate-500" />
                       {audit.doneActions} erledigt
+                    </span>
+                  )}
+                  {audit.inReviewFindings > 0 && (
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5 text-cyan-400" />
+                      {audit.inReviewFindings} review
+                    </span>
+                  )}
+                  {audit.overdueFindings > 0 && (
+                    <span className="flex items-center gap-1">
+                      <AlertCircle className="h-3.5 w-3.5 text-rose-400" />
+                      {audit.overdueFindings} overdue
                     </span>
                   )}
                 </div>

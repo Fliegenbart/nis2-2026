@@ -22,6 +22,9 @@ export async function GET(request: NextRequest) {
         actionItems: {
           select: { id: true, status: true },
         },
+        findings: {
+          select: { id: true, status: true, dueDate: true, severity: true },
+        },
       },
       orderBy: { updatedAt: "desc" },
     });
@@ -41,6 +44,15 @@ export async function GET(request: NextRequest) {
       const overallScore = calculateOverallScore(categoryScores);
       const openActions = audit.actionItems.filter((a) => a.status !== "done").length;
       const doneActions = audit.actionItems.filter((a) => a.status === "done").length;
+      const openFindings = audit.findings.filter((f) => f.status !== "closed").length;
+      const inReviewFindings = audit.findings.filter((f) => f.status === "in_review").length;
+      const overdueFindings = audit.findings.filter((f) => {
+        if (!f.dueDate || f.status === "closed") return false;
+        return f.dueDate.getTime() < Date.now();
+      }).length;
+      const criticalOpenFindings = audit.findings.filter(
+        (f) => f.status !== "closed" && f.severity === "critical"
+      ).length;
 
       return {
         id: audit.id,
@@ -52,6 +64,10 @@ export async function GET(request: NextRequest) {
         totalQuestions,
         openActions,
         doneActions,
+        openFindings,
+        inReviewFindings,
+        overdueFindings,
+        criticalOpenFindings,
         updatedAt: audit.updatedAt,
         createdAt: audit.createdAt,
       };

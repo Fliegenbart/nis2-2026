@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ensureAuditAccess } from "@/lib/audit-access";
-import { getSession } from "@/lib/auth";
+import {
+  CONSULTANT_WRITE_ROLES,
+  getSession,
+  hasRole,
+} from "@/lib/auth";
 import {
   canTransitionFindingStatus,
   isFindingSeverity,
@@ -37,6 +41,12 @@ export async function GET(
           },
           orderBy: { createdAt: "asc" },
         },
+        _count: {
+          select: {
+            comments: true,
+            actionItems: true,
+          },
+        },
       },
       orderBy: [{ status: "asc" }, { severity: "asc" }, { createdAt: "desc" }],
     });
@@ -56,9 +66,16 @@ export async function POST(
 ) {
   try {
     const { auditId } = await params;
-    const access = await ensureAuditAccess(request, auditId, "write");
+    const access = await ensureAuditAccess(request, auditId, "read");
     if (!access.ok) {
       return NextResponse.json({ error: access.error }, { status: access.status });
+    }
+    const user = await getSession(request);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!hasRole(user, CONSULTANT_WRITE_ROLES)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await request.json();
@@ -107,8 +124,6 @@ export async function POST(
       return NextResponse.json({ error: "Audit not found" }, { status: 404 });
     }
 
-    const user = await getSession(request);
-
     const finding = await prisma.finding.create({
       data: {
         auditId,
@@ -135,6 +150,12 @@ export async function POST(
             },
           },
           orderBy: { createdAt: "asc" },
+        },
+        _count: {
+          select: {
+            comments: true,
+            actionItems: true,
+          },
         },
       },
     });
