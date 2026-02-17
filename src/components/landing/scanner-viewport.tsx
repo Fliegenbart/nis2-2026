@@ -36,7 +36,7 @@ function useCountUp(target: number, duration: number, start: boolean) {
 // ---------------------------------------------------------------------------
 interface ScannerViewportProps {
   locale: string;
-  onStartScan?: () => void;
+  onStartScan?: (targetUrl: string) => void;
   children?: React.ReactNode;
 }
 
@@ -47,6 +47,7 @@ export function ScannerViewport({ locale, onStartScan, children }: ScannerViewpo
   const [isVisible, setIsVisible] = useState(false);
   const [tickerIndex, setTickerIndex] = useState(0);
   const [tickerVisible, setTickerVisible] = useState(true);
+  const [targetUrl, setTargetUrl] = useState("");
 
   const hasChildren = !!children;
   const numberLocale = locale === "de" ? "de-DE" : "en-US";
@@ -102,6 +103,11 @@ export function ScannerViewport({ locale, onStartScan, children }: ScannerViewpo
     { value: secured.toLocaleString(numberLocale), label: t("secured"), tone: "text-emerald-700" },
   ];
 
+  function handleStartScan(e: React.FormEvent) {
+    e.preventDefault();
+    onStartScan?.(targetUrl.trim());
+  }
+
   return (
     <section className="landing-section" id="scanner-viewport">
       <div className="container mx-auto px-4">
@@ -115,19 +121,23 @@ export function ScannerViewport({ locale, onStartScan, children }: ScannerViewpo
               </div>
             </div>
 
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <form
+              onSubmit={handleStartScan}
+              className="mt-5 flex flex-col gap-3 sm:flex-row"
+            >
               <input
-                value={tScanner("placeholder")}
-                readOnly
+                value={targetUrl}
+                onChange={(e) => setTargetUrl(e.target.value)}
+                placeholder={tScanner("placeholder")}
                 className="flex-1 rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-200"
               />
               <button
-                onClick={onStartScan}
+                type="submit"
                 className="rounded-lg bg-rose-500 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-rose-400"
               >
                 {tScanner("cta")}
               </button>
-            </div>
+            </form>
 
             <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-300">
               <span className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1">FREE</span>

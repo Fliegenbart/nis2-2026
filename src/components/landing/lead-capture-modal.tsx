@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Mail } from "lucide-react";
@@ -18,12 +18,14 @@ interface LeadCaptureModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   quickCheckAnswers: Record<string, AnswerValue>;
+  initialCompanyName?: string;
 }
 
 export function LeadCaptureModal({
   open,
   onOpenChange,
   quickCheckAnswers,
+  initialCompanyName,
 }: LeadCaptureModalProps) {
   const t = useTranslations("landing.leadCapture");
   const locale = useLocale();
@@ -33,6 +35,13 @@ export function LeadCaptureModal({
   const [consent, setConsent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    if (!companyName && initialCompanyName) {
+      setCompanyName(initialCompanyName);
+    }
+  }, [open, companyName, initialCompanyName]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -44,10 +53,13 @@ export function LeadCaptureModal({
       const auditRes = await fetch("/api/audit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ locale, companyName: companyName || undefined }),
       });
+      if (!auditRes.ok) {
+        throw new Error("Audit creation failed");
+      }
       const audit = await auditRes.json();
-      if (!auditRes.ok) throw new Error("Failed to create audit");
 
       // 2. Save quick-check answers
       const answersPayload = Object.entries(quickCheckAnswers).map(
@@ -58,16 +70,21 @@ export function LeadCaptureModal({
         })
       );
 
-      await fetch(`/api/audit/${audit.id}/answers`, {
+      const answersRes = await fetch(`/api/audit/${audit.id}/answers`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ answers: answersPayload }),
       });
+      if (!answersRes.ok) {
+        throw new Error("Saving answers failed");
+      }
 
       // 3. Create lead
-      await fetch("/api/leads", {
+      const leadRes = await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           email,
           companyName: companyName || undefined,
@@ -75,11 +92,15 @@ export function LeadCaptureModal({
           auditId: audit.id,
         }),
       });
+      if (!leadRes.ok) {
+        throw new Error("Lead creation failed");
+      }
 
       // 4. Redirect to dashboard
       router.push(`/${locale}/audit/${audit.id}/dashboard`);
-    } catch {
-      setError("Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.");
+    } catch (submitError) {
+      console.error("Lead capture submit error:", submitError);
+      setError("Scanner konnte nicht abgeschlossen werden. Bitte erneut versuchen.");
       setIsSubmitting(false);
     }
   }

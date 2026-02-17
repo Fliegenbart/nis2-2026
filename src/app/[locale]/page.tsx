@@ -21,9 +21,13 @@ export default function LandingPage() {
   const [state, setState] = useState<LandingState>("hero");
   const [quickCheckAnswers, setQuickCheckAnswers] = useState<Record<string, AnswerValue>>({});
   const [showLeadCapture, setShowLeadCapture] = useState(false);
+  const [scanTargetUrl, setScanTargetUrl] = useState("");
   const scannerRef = useRef<HTMLDivElement>(null);
 
-  function handleStartQuickCheck() {
+  function handleStartQuickCheck(targetUrl?: string) {
+    if (targetUrl) {
+      setScanTargetUrl(targetUrl);
+    }
     setState("quick-check");
     setTimeout(() => {
       scannerRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -70,6 +74,7 @@ export default function LandingPage() {
         open={showLeadCapture}
         onOpenChange={setShowLeadCapture}
         quickCheckAnswers={quickCheckAnswers}
+        initialCompanyName={scanTargetUrl}
       />
     </div>
   );
