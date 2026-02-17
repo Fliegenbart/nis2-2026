@@ -100,27 +100,34 @@ export function LeadCaptureModal({
       router.push(`/${locale}/audit/${audit.id}/dashboard`);
     } catch (submitError) {
       console.error("Lead capture submit error:", submitError);
-      setError("Scanner konnte nicht abgeschlossen werden. Bitte erneut versuchen.");
+      setError(
+        locale === "de"
+          ? "Scanner konnte nicht abgeschlossen werden. Bitte erneut versuchen."
+          : "Scanner could not be completed. Please try again."
+      );
       setIsSubmitting(false);
     }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-slate-900 border-slate-700/50 text-white">
+      <DialogContent className="sm:max-w-md border border-slate-200 bg-white text-slate-900 shadow-[0_32px_70px_-44px_rgba(15,23,42,0.42)]">
         <DialogHeader>
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/10 border border-cyan-500/20">
-            <Mail className="h-6 w-6 text-cyan-400" />
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-cyan-200 bg-cyan-50">
+            <Mail className="h-6 w-6 text-cyan-700" />
           </div>
-          <DialogTitle className="text-center text-white">{t("title")}</DialogTitle>
-          <DialogDescription className="text-center text-slate-400">
+          <DialogTitle className="text-center text-slate-900">{t("title")}</DialogTitle>
+          <DialogDescription className="text-center text-slate-600">
             {t("subtitle")}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="lead-email" className="block text-xs font-medium uppercase tracking-wider text-slate-400">
+            <label
+              htmlFor="lead-email"
+              className="block text-xs font-semibold uppercase tracking-wider text-slate-600"
+            >
               {t("email")}
             </label>
             <input
@@ -130,12 +137,15 @@ export function LeadCaptureModal({
               placeholder={t("emailPlaceholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="flex h-10 w-full rounded-md border border-slate-700/50 bg-slate-900/80 px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:border-cyan-500/50 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 transition-colors"
+              className="flex h-11 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-100"
             />
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="lead-company" className="block text-xs font-medium uppercase tracking-wider text-slate-400">
+            <label
+              htmlFor="lead-company"
+              className="block text-xs font-semibold uppercase tracking-wider text-slate-600"
+            >
               {t("company")}
             </label>
             <input
@@ -144,35 +154,41 @@ export function LeadCaptureModal({
               placeholder={t("companyPlaceholder")}
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
-              className="flex h-10 w-full rounded-md border border-slate-700/50 bg-slate-900/80 px-3 py-2 text-sm text-white placeholder:text-slate-600 focus:border-cyan-500/50 focus:outline-none focus:ring-2 focus:ring-cyan-500/30 transition-colors"
+              className="flex h-11 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-100"
             />
           </div>
 
-          <div className="flex items-start gap-2">
-            <input
-              type="checkbox"
-              id="lead-consent"
-              checked={consent}
-              onChange={(e) => setConsent(e.target.checked)}
-              className="mt-1 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-cyan-500/30 focus:ring-offset-slate-900"
-              required
-            />
-            <label htmlFor="lead-consent" className="text-sm text-slate-500 font-normal">
-              {t("consent")}
-            </label>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-3">
+            <div className="flex items-start gap-2.5">
+              <input
+                type="checkbox"
+                id="lead-consent"
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-200 focus:ring-2 focus:ring-offset-0"
+                required
+              />
+              <label htmlFor="lead-consent" className="text-sm text-slate-600">
+                {t("consent")}
+              </label>
+            </div>
           </div>
 
-          {error && (
-            <p className="text-sm text-rose-400">{error}</p>
-          )}
+          {error && <p className="text-sm text-rose-600">{error}</p>}
 
           <button
             type="submit"
-            className="inline-flex w-full items-center justify-center rounded-lg bg-cyan-500 px-5 py-2.5 text-sm font-bold text-slate-950 transition-all hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-cyan-500 px-5 py-2.5 text-sm font-extrabold text-slate-950 transition-all hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-40"
             disabled={!consent || !email || isSubmitting}
           >
             {isSubmitting ? t("submitting") : t("submit")}
           </button>
+
+          <p className="text-center text-xs text-slate-500">
+            {locale === "de"
+              ? "Kein Spam. Nur Ihr persönlicher Compliance-Report."
+              : "No spam. Just your personalized compliance report."}
+          </p>
         </form>
       </DialogContent>
     </Dialog>

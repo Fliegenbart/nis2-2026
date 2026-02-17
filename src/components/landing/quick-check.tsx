@@ -46,40 +46,44 @@ export function QuickCheck({ onComplete }: QuickCheckProps) {
     }
   }
 
-  const answerOptions: { value: AnswerValue; label: string; icon: React.ReactNode; selectedColor: string }[] = [
+  const answerOptions: {
+    value: AnswerValue;
+    label: string;
+    icon: React.ReactNode;
+    selectedColor: string;
+  }[] = [
     {
       value: "fulfilled",
       label: tAudit("fulfilled"),
       icon: <CheckCircle className="h-5 w-5" />,
-      selectedColor: "border-emerald-500/50 bg-emerald-500/10 text-emerald-400",
+      selectedColor: "border-emerald-300 bg-emerald-50 text-emerald-800",
     },
     {
       value: "partial",
       label: tAudit("partial"),
       icon: <MinusCircle className="h-5 w-5" />,
-      selectedColor: "border-amber-500/50 bg-amber-500/10 text-amber-400",
+      selectedColor: "border-amber-300 bg-amber-50 text-amber-800",
     },
     {
       value: "not_fulfilled",
       label: tAudit("notFulfilled"),
       icon: <XCircle className="h-5 w-5" />,
-      selectedColor: "border-rose-500/50 bg-rose-500/10 text-rose-400",
+      selectedColor: "border-rose-300 bg-rose-50 text-rose-800",
     },
   ];
 
   return (
-    <div className="mx-auto max-w-2xl" id="quick-check">
+    <div className="mx-auto max-w-3xl" id="quick-check">
       <div className="mb-8 text-center">
-        <h2 className="text-3xl font-bold text-slate-900 mb-2">
-          {t("title")}
-        </h2>
-        <p className="text-slate-600">{t("subtitle")}</p>
+        <p className="landing-eyebrow">{locale === "de" ? "Audit Snapshot" : "Audit Snapshot"}</p>
+        <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">{t("title")}</h2>
+        <p className="mt-3 text-slate-600">{t("subtitle")}</p>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-[0_20px_36px_-30px_rgba(15,23,42,0.28)]">
+      <div className="landing-card p-6 sm:p-8">
         <div className="mb-6">
           <div className="mb-3 flex items-center justify-between">
-            <span className="text-sm text-slate-500">
+            <span className="text-sm font-medium text-slate-500">
               {t("question", {
                 current: currentIndex + 1,
                 total: questions.length,
@@ -89,7 +93,7 @@ export function QuickCheck({ onComplete }: QuickCheckProps) {
               {tCategories(current.category.id)}
             </span>
           </div>
-          <div className="h-1.5 w-full rounded-full bg-slate-100">
+          <div className="h-2 w-full rounded-full bg-slate-100">
             <motion.div
               className="h-full rounded-full bg-cyan-500"
               initial={false}
@@ -102,24 +106,27 @@ export function QuickCheck({ onComplete }: QuickCheckProps) {
         <AnimatePresence mode="wait">
           <motion.div
             key={currentIndex}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.2, ease: "easeInOut" }}
           >
-            <h3 className="mb-5 text-lg font-bold leading-relaxed text-slate-900">
-              {current.question.text[locale as "de" | "en"]}
-            </h3>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-5 sm:p-6">
+              <h3 className="text-lg font-bold leading-relaxed text-slate-900">
+                {current.question.text[locale as "de" | "en"]}
+              </h3>
+            </div>
 
-            <div className="space-y-3">
+            <div className="mt-4 space-y-3">
               {answerOptions.map((option) => (
                 <button
                   key={option.value}
+                  type="button"
                   onClick={() => handleAnswer(option.value)}
-                  className={`w-full cursor-pointer rounded-xl border p-4 text-left transition-colors ${
+                  className={`w-full cursor-pointer rounded-xl border p-4 text-left transition-colors duration-200 ${
                     currentAnswer === option.value
-                      ? `${option.selectedColor} border-cyan-500 bg-cyan-50`
-                      : "border-slate-200 bg-white text-slate-700 hover:border-cyan-300"
+                      ? option.selectedColor
+                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
                   }`}
                 >
                   <span className="flex items-center gap-3">
@@ -132,16 +139,18 @@ export function QuickCheck({ onComplete }: QuickCheckProps) {
           </motion.div>
         </AnimatePresence>
 
-        <div className="flex justify-between pt-6">
+        <div className="flex items-center justify-between pt-6">
           <button
+            type="button"
             onClick={handleBack}
             disabled={currentIndex === 0}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <ArrowLeft className="h-4 w-4" />
             {t("back")}
           </button>
           <button
+            type="button"
             onClick={handleNext}
             disabled={!currentAnswer}
             className="inline-flex items-center gap-2 rounded-lg bg-cyan-500 px-6 py-3 font-bold text-slate-950 transition-colors hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-40"

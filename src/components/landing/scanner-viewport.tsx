@@ -2,11 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { Activity } from "lucide-react";
+import { Activity, ShieldCheck } from "lucide-react";
 
-// ---------------------------------------------------------------------------
-// useCountUp hook
-// ---------------------------------------------------------------------------
 function useCountUp(target: number, duration: number, start: boolean) {
   const [count, setCount] = useState(0);
 
@@ -31,9 +28,6 @@ function useCountUp(target: number, duration: number, start: boolean) {
   return count;
 }
 
-// ---------------------------------------------------------------------------
-// Main component
-// ---------------------------------------------------------------------------
 interface ScannerViewportProps {
   locale: string;
   onStartScan?: (targetUrl: string) => void;
@@ -51,21 +45,26 @@ export function ScannerViewport({ locale, onStartScan, children }: ScannerViewpo
 
   const hasChildren = !!children;
   const numberLocale = locale === "de" ? "de-DE" : "en-US";
+  const quickCheckTrustLabel =
+    locale === "de" ? "Keine Datenspeicherung im Quick-Check" : "No data stored in quick check";
+  const scannerPills =
+    locale === "de"
+      ? ["KOSTENLOS", "UNVERBINDLICH", "ERGEBNIS IN 30 SEK."]
+      : ["FREE", "NO COMMITMENT", "30-SEC RESULT"];
 
   const tickerMessages =
     locale === "de"
       ? [
-          "Thomas W. von SaaS Solutions hat den Report heruntergeladen",
           "DataCenter Pro hat den Quick-Check abgeschlossen",
           "HealthTech Nord hat ein Audit gestartet",
+          "SaaSWorks hat den Report exportiert",
         ]
       : [
-          "Thomas W. from SaaS Solutions downloaded the report",
           "DataCenter Pro completed the quick check",
           "HealthTech North started an audit",
+          "SaaSWorks exported the report",
         ];
 
-  // IntersectionObserver to trigger count-up
   useEffect(() => {
     if (!statsRef.current) return;
     const observer = new IntersectionObserver(
@@ -75,7 +74,7 @@ export function ScannerViewport({ locale, onStartScan, children }: ScannerViewpo
           observer.disconnect();
         }
       },
-      { threshold: 0.3 },
+      { threshold: 0.3 }
     );
     observer.observe(statsRef.current);
     return () => observer.disconnect();
@@ -87,19 +86,18 @@ export function ScannerViewport({ locale, onStartScan, children }: ScannerViewpo
       setTimeout(() => {
         setTickerIndex((i) => (i + 1) % tickerMessages.length);
         setTickerVisible(true);
-      }, 300);
-    }, 3800);
+      }, 250);
+    }, 3600);
     return () => clearInterval(interval);
   }, [tickerMessages.length]);
 
-  // Count-up values
   const scanned = useCountUp(1247, 1500, isVisible);
   const atRisk = useCountUp(873, 1500, isVisible);
   const secured = useCountUp(89, 1500, isVisible);
 
   const stats = [
-    { value: `${scanned.toLocaleString(numberLocale)}+`, label: t("scanned"), tone: "text-cyan-700" },
-    { value: atRisk.toLocaleString(numberLocale), label: t("atRisk"), tone: "text-rose-600" },
+    { value: `${scanned.toLocaleString(numberLocale)}+`, label: t("scanned"), tone: "text-slate-900" },
+    { value: atRisk.toLocaleString(numberLocale), label: t("atRisk"), tone: "text-rose-700" },
     { value: secured.toLocaleString(numberLocale), label: t("secured"), tone: "text-emerald-700" },
   ];
 
@@ -111,48 +109,53 @@ export function ScannerViewport({ locale, onStartScan, children }: ScannerViewpo
   return (
     <section className="landing-section" id="scanner-viewport">
       <div className="container mx-auto px-4">
-        <div className="mx-auto max-w-4xl">
-          <div className="overflow-hidden rounded-2xl bg-slate-950 p-6 shadow-[0_26px_60px_-34px_rgba(2,6,23,0.82)] sm:p-8">
-            <div className="flex items-start justify-between gap-4">
+        <div className="mx-auto max-w-5xl">
+          <div className="landing-panel p-6 sm:p-8">
+            <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <p className="landing-eyebrow-dark">Security Scanner</p>
-                <h2 className="mt-3 text-2xl font-extrabold text-white sm:text-3xl">{tScanner("title")}</h2>
-                <p className="mt-2 text-sm text-slate-300 sm:text-base">{tScanner("subtitle")}</p>
+                <h2 className="mt-3 text-2xl font-extrabold text-slate-900 sm:text-3xl">
+                  {tScanner("title")}
+                </h2>
+                <p className="mt-2 text-sm text-slate-600 sm:text-base">{tScanner("subtitle")}</p>
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                {quickCheckTrustLabel}
               </div>
             </div>
 
             <form
               onSubmit={handleStartScan}
-              className="mt-5 flex flex-col gap-3 sm:flex-row"
+              className="mt-6 grid gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:grid-cols-[1fr_auto]"
             >
               <input
                 value={targetUrl}
                 onChange={(e) => setTargetUrl(e.target.value)}
                 placeholder={tScanner("placeholder")}
-                className="flex-1 rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-200"
+                className="h-11 rounded-lg border border-slate-300 bg-white px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-100"
               />
               <button
                 type="submit"
-                className="rounded-lg bg-rose-500 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-rose-400"
+                className="h-11 rounded-lg bg-cyan-500 px-5 text-sm font-extrabold text-slate-950 transition-colors hover:bg-cyan-400"
               >
                 {tScanner("cta")}
               </button>
             </form>
 
-            <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-300">
-              <span className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1">FREE</span>
-              <span className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1">NO COMMITMENT</span>
-              <span className="rounded-full border border-slate-700 bg-slate-900 px-3 py-1">30-SEC RESULT</span>
+            <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
+              {scannerPills.map((pill) => (
+                <span key={pill} className="landing-chip">
+                  {pill}
+                </span>
+              ))}
             </div>
           </div>
         </div>
 
         <div ref={statsRef} className="mx-auto mt-8 grid max-w-5xl grid-cols-1 gap-4 lg:grid-cols-3">
           {stats.map((stat, index) => (
-            <div
-              key={index}
-              className="landing-card p-5 text-center"
-            >
+            <div key={index} className="landing-card p-5 text-center">
               <div className={`font-mono text-3xl font-extrabold sm:text-4xl ${stat.tone}`}>
                 {stat.value}
               </div>
@@ -172,9 +175,7 @@ export function ScannerViewport({ locale, onStartScan, children }: ScannerViewpo
         </div>
 
         {hasChildren && (
-          <div className="landing-card mx-auto mt-8 max-w-5xl p-5 sm:p-8">
-            {children}
-          </div>
+          <div className="landing-card mx-auto mt-8 max-w-5xl p-5 sm:p-8">{children}</div>
         )}
       </div>
     </section>
