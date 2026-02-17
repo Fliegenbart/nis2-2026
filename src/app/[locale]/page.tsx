@@ -23,23 +23,40 @@ export default function LandingPage() {
   const [showLeadCapture, setShowLeadCapture] = useState(false);
   const [scanTargetUrl, setScanTargetUrl] = useState("");
   const scannerRef = useRef<HTMLDivElement>(null);
+  const HEADER_OFFSET = 84;
+
+  function scrollToTarget(sectionId: string) {
+    setTimeout(() => {
+      const target =
+        document.getElementById(sectionId) ??
+        scannerRef.current;
+
+      if (!target) return;
+
+      const top =
+        target.getBoundingClientRect().top +
+        window.scrollY -
+        HEADER_OFFSET;
+
+      window.scrollTo({
+        top: Math.max(0, top),
+        behavior: "smooth",
+      });
+    }, 120);
+  }
 
   function handleStartQuickCheck(targetUrl?: string) {
     if (targetUrl) {
       setScanTargetUrl(targetUrl);
     }
     setState("quick-check");
-    setTimeout(() => {
-      scannerRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
+    scrollToTarget("quick-check");
   }
 
   function handleQuickCheckComplete(answers: Record<string, AnswerValue>) {
     setQuickCheckAnswers(answers);
     setState("results");
-    setTimeout(() => {
-      scannerRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
+    scrollToTarget("results");
   }
 
   function handleUnlockResults() {
