@@ -42,6 +42,10 @@ export interface ActionItem {
   priority: string;
   status: string;
   dueDate: string | null;
+  ownerName: string | null;
+  ownerEmail: string | null;
+  ownerUserId: string | null;
+  findingId: string | null;
   questionId: string | null;
   categoryId: string | null;
   createdAt: string;
@@ -236,6 +240,12 @@ export function useAudit(auditId: string) {
       title: string;
       description?: string;
       priority?: string;
+      status?: string;
+      dueDate?: string | null;
+      ownerName?: string;
+      ownerEmail?: string;
+      ownerUserId?: string;
+      findingId?: string;
       questionId?: string;
       categoryId?: string;
     }): Promise<ActionItem | null> => {
@@ -262,7 +272,20 @@ export function useAudit(auditId: string) {
   const updateActionItem = useCallback(
     async (
       actionId: string,
-      updates: Partial<Pick<ActionItem, "title" | "description" | "priority" | "status" | "dueDate">>
+      updates: Partial<
+        Pick<
+          ActionItem,
+          | "title"
+          | "description"
+          | "priority"
+          | "status"
+          | "dueDate"
+          | "ownerName"
+          | "ownerEmail"
+          | "ownerUserId"
+          | "findingId"
+        >
+      >
     ): Promise<boolean> => {
       try {
         const res = await fetch(

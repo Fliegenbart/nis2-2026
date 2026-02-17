@@ -10,7 +10,7 @@ export async function DELETE(
 ) {
   try {
     const { auditId, evidenceId } = await params;
-    const access = await ensureAuditAccess(request, auditId);
+    const access = await ensureAuditAccess(request, auditId, "write");
     if (!access.ok) {
       return NextResponse.json({ error: access.error }, { status: access.status });
     }

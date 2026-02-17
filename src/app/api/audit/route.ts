@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createAuditSchema } from "@/lib/validators";
+import { FRAMEWORK_VERSION, METHODOLOGY_VERSION } from "@/lib/audit-methodology";
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,6 +20,8 @@ export async function POST(request: NextRequest) {
         employeeCount: data.employeeCount,
         industry: data.industry,
         locale: data.locale,
+        frameworkVersion: FRAMEWORK_VERSION,
+        methodologyVersion: METHODOLOGY_VERSION,
       },
     });
 

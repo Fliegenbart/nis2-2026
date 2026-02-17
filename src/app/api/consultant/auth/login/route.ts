@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword, createToken, SESSION_COOKIE_OPTIONS } from "@/lib/auth";
+import { ensureUserOrganization } from "@/lib/organization";
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,6 +30,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const organizationId = await ensureUserOrganization({
+      userId: user.id,
+      organizationId: user.organizationId ?? null,
+      preferredName: user.companyName || `${user.name} Compliance`,
+    });
+
     const token = createToken(user.id);
     const response = NextResponse.json({
       user: {
@@ -37,6 +44,7 @@ export async function POST(request: NextRequest) {
         name: user.name,
         role: user.role,
         companyName: user.companyName,
+        organizationId,
       },
     });
 

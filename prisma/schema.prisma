@@ -7,40 +7,121 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  name         String
-  role         String   @default("consultant")
-  companyName  String?
-  logoUrl      String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+enum UserRole {
+  admin
+  consultant
+  reviewer
+  client_readonly
+}
 
-  audits Audit[]
+enum RiskLevel {
+  low
+  medium
+  high
+  critical
+}
+
+enum ActionPriority {
+  critical
+  high
+  medium
+  low
+}
+
+enum ActionStatus {
+  open
+  in_progress
+  blocked
+  done
+}
+
+enum FindingStatus {
+  draft
+  in_review
+  approved
+  closed
+}
+
+enum FindingSeverity {
+  critical
+  high
+  medium
+  low
+}
+
+enum FindingCommentRole {
+  consultant
+  reviewer
+  client
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users   User[]
+  clients Client[]
+  audits  Audit[]
+}
+
+model User {
+  id             String   @id @default(uuid())
+  email          String   @unique
+  passwordHash   String
+  name           String
+  role           UserRole @default(consultant)
+  companyName    String?
+  logoUrl        String?
+  organizationId String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization     Organization?    @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  audits           Audit[]
+  createdFindings  Finding[]        @relation("FindingCreatedBy")
+  reviewedFindings Finding[]        @relation("FindingReviewedBy")
+  findingComments  FindingComment[] @relation("FindingCommentAuthor")
+  ownedActionItems ActionItem[]     @relation("ActionOwner")
 }
 
 model Audit {
-  id            String   @id @default(uuid())
-  companyName   String?
-  revenue       Float?
-  employeeCount Int?
-  industry      String?
-  locale        String   @default("de")
-  isPremium     Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                 String     @id @default(uuid())
+  companyName        String?
+  revenue            Float?
+  employeeCount      Int?
+  industry           String?
+  locale             String     @default("de")
+  isPremium          Boolean    @default(false)
+  frameworkVersion   String     @default("nis2-2026-v1")
+  methodologyVersion String     @default("methodology-v1")
+  isLocked           Boolean    @default(false)
+  lockedAt           DateTime?
+  overallScore       Int?
+  riskLevel          RiskLevel?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
 
-  userId     String?
-  user       User?   @relation(fields: [userId], references: [id])
-  clientName String?
-  clientLogo String?
+  userId         String?
+  user           User?         @relation(fields: [userId], references: [id])
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  clientId       String?
+  client         Client?       @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  clientName     String?
+  clientLogo     String?
 
-  answers     Answer[]
-  lead        Lead?
-  evidences   Evidence[]
-  actionItems ActionItem[]
+  answers         Answer[]
+  lead            Lead?
+  evidences       Evidence[]
+  actionItems     ActionItem[]
+  findings        Finding[]
+  reportSnapshots AuditSnapshot[]
+
+  @@index([frameworkVersion])
+  @@index([organizationId, clientId])
 }
 
 model Lead {
@@ -84,17 +165,117 @@ model Evidence {
 }
 
 model ActionItem {
-  id          String    @id @default(uuid())
+  id          String         @id @default(uuid())
   title       String
   description String?
-  priority    String    @default("medium")
-  status      String    @default("open")
+  priority    ActionPriority @default(medium)
+  status      ActionStatus   @default(open)
   dueDate     DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  ownerName   String?
+  ownerEmail  String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
-  auditId    String
-  audit      Audit  @relation(fields: [auditId], references: [id], onDelete: Cascade)
-  questionId String?
-  categoryId String?
+  auditId     String
+  audit       Audit    @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  questionId  String?
+  categoryId  String?
+  ownerUserId String?
+  ownerUser   User?    @relation("ActionOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
+  findingId   String?
+  finding     Finding? @relation(fields: [findingId], references: [id], onDelete: SetNull)
+
+  @@index([auditId, status, priority])
+  @@index([findingId])
+}
+
+model Finding {
+  id               String          @id @default(uuid())
+  title            String
+  description      String?
+  severity         FindingSeverity @default(medium)
+  status           FindingStatus   @default(draft)
+  dueDate          DateTime?
+  approvedAt       DateTime?
+  closedAt         DateTime?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  auditId          String
+  questionId       String?
+  categoryId       String?
+  createdByUserId  String?
+  reviewedByUserId String?
+
+  audit       Audit            @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  createdBy   User?            @relation("FindingCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  reviewedBy  User?            @relation("FindingReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  comments    FindingComment[]
+  actionItems ActionItem[]
+
+  @@index([auditId, status])
+  @@index([auditId, severity])
+}
+
+model FindingComment {
+  id           String             @id @default(uuid())
+  body         String
+  authorRole   FindingCommentRole @default(consultant)
+  authorName   String?
+  createdAt    DateTime           @default(now())
+  findingId    String
+  authorUserId String?
+
+  finding    Finding @relation(fields: [findingId], references: [id], onDelete: Cascade)
+  authorUser User?   @relation("FindingCommentAuthor", fields: [authorUserId], references: [id], onDelete: SetNull)
+
+  @@index([findingId, createdAt])
+}
+
+model Client {
+  id             String   @id @default(uuid())
+  name           String
+  companyName    String?
+  industry       String?
+  logoUrl        String?
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  audits       Audit[]
+
+  @@index([organizationId, name])
+}
+
+model ControlCatalog {
+  id                 String   @id @default(uuid())
+  frameworkVersion   String
+  methodologyVersion String
+  categoryId         String
+  questionId         String
+  severity           String
+  weight             Int
+  articleRef         String
+  legalReference     String
+  evidenceRequired   Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([frameworkVersion, questionId])
+  @@index([frameworkVersion, categoryId])
+}
+
+model AuditSnapshot {
+  id                 String    @id @default(uuid())
+  auditId            String
+  frameworkVersion   String
+  methodologyVersion String
+  overallScore       Int
+  riskLevel          RiskLevel
+  payload            Json
+  createdAt          DateTime  @default(now())
+
+  audit Audit @relation(fields: [auditId], references: [id], onDelete: Cascade)
+
+  @@index([auditId, createdAt])
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateAuditPDF } from "@/lib/pdf-generator";
 import { ensureAuditAccess } from "@/lib/audit-access";
+import { getOrCreateAuditSnapshot } from "@/lib/audit-snapshot";
 
 export async function GET(
   request: NextRequest,
@@ -9,9 +10,14 @@ export async function GET(
 ) {
   try {
     const { auditId } = await params;
-    const access = await ensureAuditAccess(request, auditId);
+    const access = await ensureAuditAccess(request, auditId, "read");
     if (!access.ok) {
       return NextResponse.json({ error: access.error }, { status: access.status });
+    }
+
+    const snapshot = await getOrCreateAuditSnapshot(auditId);
+    if (!snapshot) {
+      return NextResponse.json({ error: "Audit not found" }, { status: 404 });
     }
 
     const audit = await prisma.audit.findUnique({
@@ -40,6 +46,7 @@ export async function GET(
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="nis2-audit-report-${auditId.slice(0, 8)}.pdf"`,
+        "X-Audit-Snapshot-Id": snapshot.id,
       },
     });
   } catch {

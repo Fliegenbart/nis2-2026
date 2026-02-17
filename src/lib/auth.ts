@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { NextRequest } from "next/server";
 import { randomBytes } from "crypto";
+import type { UserRole } from "@prisma/client";
 import { prisma } from "./prisma";
 
 const COOKIE_NAME = "consultant-session";
@@ -40,6 +41,16 @@ export function verifyToken(token: string): { userId: string } | null {
   }
 }
 
+export interface SessionUser {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  companyName: string | null;
+  logoUrl: string | null;
+  organizationId: string | null;
+}
+
 export async function getSession(request: NextRequest) {
   const token = request.cookies.get(COOKIE_NAME)?.value;
   if (!token) return null;
@@ -49,10 +60,18 @@ export async function getSession(request: NextRequest) {
 
   const user = await prisma.user.findUnique({
     where: { id: payload.userId },
-    select: { id: true, email: true, name: true, role: true, companyName: true, logoUrl: true },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      companyName: true,
+      logoUrl: true,
+      organizationId: true,
+    },
   });
 
-  return user;
+  return user as SessionUser | null;
 }
 
 export async function requireAuth(request: NextRequest) {
@@ -62,6 +81,32 @@ export async function requireAuth(request: NextRequest) {
   }
   return user;
 }
+
+export function hasRole(user: SessionUser, roles: readonly UserRole[]): boolean {
+  return roles.includes(user.role);
+}
+
+export async function requireAuthWithRoles(
+  request: NextRequest,
+  roles: readonly UserRole[]
+): Promise<SessionUser> {
+  const user = await requireAuth(request);
+  if (!hasRole(user, roles)) {
+    throw new Error("Forbidden");
+  }
+  return user;
+}
+
+export const CONSULTANT_READ_ROLES: readonly UserRole[] = [
+  "admin",
+  "consultant",
+  "reviewer",
+];
+
+export const CONSULTANT_WRITE_ROLES: readonly UserRole[] = [
+  "admin",
+  "consultant",
+];
 
 export const SESSION_COOKIE_OPTIONS = {
   name: COOKIE_NAME,

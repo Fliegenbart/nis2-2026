@@ -1,16 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth";
+import {
+  CONSULTANT_READ_ROLES,
+  requireAuthWithRoles,
+} from "@/lib/auth";
 import { NIS2_CATEGORIES } from "@/data/nis2-framework";
-import { calculateAllCategoryScores } from "@/lib/scoring";
+import { calculateAllCategoryScores, calculateOverallScore } from "@/lib/scoring";
 import type { AnswerValue } from "@/data/nis2-framework";
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await requireAuth(request);
+    const user = await requireAuthWithRoles(request, CONSULTANT_READ_ROLES);
+    if (!user.organizationId) {
+      return NextResponse.json({ audits: [] });
+    }
 
     const audits = await prisma.audit.findMany({
-      where: { userId: user.id },
+      where: { organizationId: user.organizationId },
       include: {
         answers: true,
         actionItems: {
@@ -32,13 +38,7 @@ export async function GET(request: NextRequest) {
       }
 
       const categoryScores = calculateAllCategoryScores(answersMap, NIS2_CATEGORIES);
-      const overallScore =
-        categoryScores.length > 0
-          ? Math.round(
-              categoryScores.reduce((s, c) => s + c.score, 0) /
-                categoryScores.length
-            )
-          : 0;
+      const overallScore = calculateOverallScore(categoryScores);
       const openActions = audit.actionItems.filter((a) => a.status !== "done").length;
       const doneActions = audit.actionItems.filter((a) => a.status === "done").length;
 
@@ -58,7 +58,10 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({ audits: auditSummaries });
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === "Forbidden") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     return NextResponse.json(
       { error: "Unauthorized" },
       { status: 401 }

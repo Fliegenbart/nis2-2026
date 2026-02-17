@@ -9,7 +9,7 @@ export async function POST(
 ) {
   try {
     const { auditId } = await params;
-    const access = await ensureAuditAccess(request, auditId);
+    const access = await ensureAuditAccess(request, auditId, "write");
     if (!access.ok) {
       return NextResponse.json({ error: access.error }, { status: access.status });
     }

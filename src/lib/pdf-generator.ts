@@ -2,7 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { NIS2_CATEGORIES, getCategoryForQuestion } from "@/data/nis2-framework";
 import type { AnswerValue, NIS2Question } from "@/data/nis2-framework";
-import { calculateCategoryScore, getScoreLabel } from "./scoring";
+import { calculateAuditScoreV2, getScoreLabel } from "./scoring";
 import { calculateMaxFine, formatFine } from "./fine-calculator";
 
 interface AuditData {
@@ -62,6 +62,7 @@ const translations = {
     noActions: "Keine Maßnahmen definiert.",
     open: "Offen",
     inProgress: "In Bearbeitung",
+    blocked: "Blockiert",
     done: "Erledigt",
     critical: "Kritisch",
     high: "Hoch",
@@ -101,6 +102,7 @@ const translations = {
     noActions: "No action items defined.",
     open: "Open",
     inProgress: "In Progress",
+    blocked: "Blocked",
     done: "Done",
     critical: "Critical",
     high: "High",
@@ -154,6 +156,7 @@ function getStatusLabel(
   const map: Record<string, string> = {
     open: t.open,
     in_progress: t.inProgress,
+    blocked: t.blocked,
     done: t.done,
   };
   return map[status] || status;
@@ -183,20 +186,12 @@ export async function generateAuditPDF(
     if (a.notes) notesMap.set(a.questionId, a.notes);
   }
 
-  // Calculate scores
-  const categoryScores = NIS2_CATEGORIES.map((cat) => ({
-    id: cat.id,
-    name: cat.name[locale],
-    score: calculateCategoryScore(answersMap, cat.questions),
+  const scoreModel = calculateAuditScoreV2(answersMap, NIS2_CATEGORIES);
+  const categoryScores = scoreModel.categoryScores.map((cat) => ({
+    id: cat.categoryId,
+    score: cat.score,
   }));
-
-  const overallScore =
-    categoryScores.length > 0
-      ? Math.round(
-          categoryScores.reduce((s, c) => s + c.score, 0) /
-            categoryScores.length
-        )
-      : 0;
+  const overallScore = scoreModel.overallScore;
 
   // --- Cover Page ---
   doc.setFillColor(15, 23, 42); // slate-900

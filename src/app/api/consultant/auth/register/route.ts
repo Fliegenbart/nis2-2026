@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, createToken, SESSION_COOKIE_OPTIONS } from "@/lib/auth";
+import { createOrganization } from "@/lib/organization";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, name, companyName } = await request.json();
+    const { email, password, name, companyName, organizationName } = await request.json();
 
     if (!email || !password || !name) {
       return NextResponse.json(
@@ -29,8 +30,23 @@ export async function POST(request: NextRequest) {
     }
 
     const passwordHash = await hashPassword(password);
-    const user = await prisma.user.create({
-      data: { email, passwordHash, name, companyName },
+    const orgDisplayName =
+      organizationName?.trim() ||
+      companyName?.trim() ||
+      `${name.trim()} Compliance`;
+
+    const user = await prisma.$transaction(async (tx) => {
+      const org = await createOrganization(orgDisplayName, tx);
+      return tx.user.create({
+        data: {
+          email,
+          passwordHash,
+          name,
+          companyName: companyName || null,
+          organizationId: org.id,
+          role: "admin",
+        },
+      });
     });
 
     const token = createToken(user.id);
@@ -42,6 +58,7 @@ export async function POST(request: NextRequest) {
           name: user.name,
           role: user.role,
           companyName: user.companyName,
+          organizationId: user.organizationId,
         },
       },
       { status: 201 }

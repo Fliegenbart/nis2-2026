@@ -20,7 +20,7 @@ export async function GET(
 ) {
   try {
     const { auditId } = await params;
-    const access = await ensureAuditAccess(request, auditId);
+    const access = await ensureAuditAccess(request, auditId, "read");
     if (!access.ok) {
       return NextResponse.json({ error: access.error }, { status: access.status });
     }
@@ -45,7 +45,7 @@ export async function POST(
   ) {
   try {
     const { auditId } = await params;
-    const access = await ensureAuditAccess(request, auditId);
+    const access = await ensureAuditAccess(request, auditId, "write");
     if (!access.ok) {
       return NextResponse.json({ error: access.error }, { status: access.status });
     }

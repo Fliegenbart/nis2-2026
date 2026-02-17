@@ -49,3 +49,8 @@ prisma.config.ts
 
 # local data
 /data/
+
+# local artifacts
+/.playwright-cli/
+/output/
+/tmp/
