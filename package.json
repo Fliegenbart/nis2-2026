@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "build:vercel": "prisma generate && prisma migrate deploy && next build",
+    "build:vercel": "prisma generate && prisma migrate deploy && prisma db seed && next build",
     "db:seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate",
     "start": "next start",
