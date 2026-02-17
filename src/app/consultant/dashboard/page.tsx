@@ -78,12 +78,6 @@ function ScoreDonut({ score }: { score: number }) {
   );
 }
 
-function getScoreLabel(score: number): string {
-  if (score <= 33) return "Kritisch";
-  if (score <= 66) return "Verbesserungsbedarf";
-  return "Gut";
-}
-
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("de-DE", {
     day: "2-digit",

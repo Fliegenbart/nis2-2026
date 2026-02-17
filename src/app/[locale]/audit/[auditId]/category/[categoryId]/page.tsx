@@ -12,7 +12,7 @@ import { useAudit } from "@/hooks/use-audit";
 import { useScoring } from "@/hooks/use-scoring";
 import { NIS2_CATEGORIES, getCategoryById } from "@/data/nis2-framework";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export default function CategoryAuditPage() {
   const params = useParams();
@@ -25,18 +25,15 @@ export default function CategoryAuditPage() {
 
   const { answers, setAnswer, isLoading, isSaving } = useAudit(auditId);
   const { categoryScores } = useScoring(answers);
-  const [showPaywall, setShowPaywall] = useState(false);
+  const [closedPaywallCategoryId, setClosedPaywallCategoryId] = useState<string | null>(null);
 
   const category = getCategoryById(categoryId);
   const categoryIndex = NIS2_CATEGORIES.findIndex((c) => c.id === categoryId);
   const prevCategory = categoryIndex > 0 ? NIS2_CATEGORIES[categoryIndex - 1] : null;
   const nextCategory = categoryIndex < NIS2_CATEGORIES.length - 1 ? NIS2_CATEGORIES[categoryIndex + 1] : null;
-
-  useEffect(() => {
-    if (category && !category.isFree) {
-      setShowPaywall(true);
-    }
-  }, [category]);
+  const showPaywall = Boolean(
+    category && !category.isFree && closedPaywallCategoryId !== category.id
+  );
 
   if (isLoading) {
     return (
@@ -168,7 +165,7 @@ export default function CategoryAuditPage() {
 
       <PaywallModal
         isOpen={showPaywall}
-        onClose={() => setShowPaywall(false)}
+        onClose={() => setClosedPaywallCategoryId(category?.id ?? null)}
         categoryName={tCategories(category.id)}
       />
     </>

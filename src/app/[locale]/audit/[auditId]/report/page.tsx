@@ -17,7 +17,6 @@ export default function ReportPage() {
   const locale = useLocale();
   const t = useTranslations("report");
   const tCategories = useTranslations("categories");
-  const tAudit = useTranslations("audit");
   const { answers, isLoading, auditData } = useAudit(auditId);
   const { overallScore, categoryScores } = useScoring(answers);
   const [isGenerating, setIsGenerating] = useState(false);

@@ -21,7 +21,6 @@ export function CategorySidebar({
   auditId,
 }: CategorySidebarProps) {
   const locale = useLocale();
-  const tCategories = useTranslations("categories");
   const tDashboard = useTranslations("dashboard");
   const localeKey = locale as "de" | "en";
 
@@ -44,7 +43,7 @@ export function CategorySidebar({
         return (
           <Link
             key={category.id}
-            href={`/${locale}/audit/${auditId}/${category.id}`}
+            href={`/${locale}/audit/${auditId}/category/${category.id}`}
             className={cn(
               "group flex flex-col gap-2 rounded-lg border px-3 py-3 text-sm transition-all",
               isCurrent

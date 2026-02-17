@@ -43,7 +43,7 @@ export default function LandingPage() {
   }
 
   return (
-    <>
+    <div className="landing-light">
       <HeroSection onStartQuickCheck={handleStartQuickCheck} />
       <ProblemSection />
       <BulletproofViewport />
@@ -71,6 +71,6 @@ export default function LandingPage() {
         onOpenChange={setShowLeadCapture}
         quickCheckAnswers={quickCheckAnswers}
       />
-    </>
+    </div>
   );
 }

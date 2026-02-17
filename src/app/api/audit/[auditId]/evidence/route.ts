@@ -3,13 +3,27 @@ import { prisma } from "@/lib/prisma";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { randomUUID } from "crypto";
+import { ensureAuditAccess } from "@/lib/audit-access";
+
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+const ALLOWED_MIME_TYPES = new Set([
+  "application/pdf",
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "text/plain",
+]);
 
 export async function GET(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ auditId: string }> }
 ) {
   try {
     const { auditId } = await params;
+    const access = await ensureAuditAccess(request, auditId);
+    if (!access.ok) {
+      return NextResponse.json({ error: access.error }, { status: access.status });
+    }
 
     const evidences = await prisma.evidence.findMany({
       where: { auditId },
@@ -28,9 +42,13 @@ export async function GET(
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ auditId: string }> }
-) {
+  ) {
   try {
     const { auditId } = await params;
+    const access = await ensureAuditAccess(request, auditId);
+    if (!access.ok) {
+      return NextResponse.json({ error: access.error }, { status: access.status });
+    }
 
     const audit = await prisma.audit.findUnique({ where: { id: auditId } });
     if (!audit) {
@@ -47,11 +65,24 @@ export async function POST(
         { status: 400 }
       );
     }
+    if (file.size <= 0 || file.size > MAX_UPLOAD_BYTES) {
+      return NextResponse.json(
+        { error: "Invalid file size (max 10 MB)" },
+        { status: 400 }
+      );
+    }
+    if (file.type && !ALLOWED_MIME_TYPES.has(file.type)) {
+      return NextResponse.json(
+        { error: "File type not allowed" },
+        { status: 400 }
+      );
+    }
 
     const uploadDir = join(process.cwd(), "public", "uploads", auditId);
     await mkdir(uploadDir, { recursive: true });
 
-    const ext = file.name.split(".").pop() || "bin";
+    const extMatch = file.name.toLowerCase().match(/\.([a-z0-9]{1,10})$/);
+    const ext = extMatch ? extMatch[1] : "bin";
     const savedName = `${randomUUID()}.${ext}`;
     const bytes = new Uint8Array(await file.arrayBuffer());
     await writeFile(join(uploadDir, savedName), bytes);

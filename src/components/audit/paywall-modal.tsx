@@ -41,7 +41,7 @@ export function PaywallModal({
           </div>
           <DialogTitle className="text-center text-white">{t("title")}</DialogTitle>
           <DialogDescription className="text-center text-slate-400">
-            {t("description")}
+            {t("description")} <span className="text-cyan-300">{categoryName}</span>
           </DialogDescription>
         </DialogHeader>
 

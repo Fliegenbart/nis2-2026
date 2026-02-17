@@ -13,30 +13,31 @@ export function ProblemSection() {
   const t = useTranslations("landing.problem");
 
   return (
-    <section className="bg-slate-950 py-32 sm:py-40">
+    <section className="landing-section">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          <p className="landing-eyebrow">Risk Context</p>
+          <h2 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
             {t("title")}
           </h2>
-          <p className="text-lg text-slate-400 max-w-2xl mx-auto mt-4">
+          <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-600">
             {t("subtitle")}
           </p>
         </div>
 
-        <div className="mx-auto mt-16 grid max-w-5xl gap-8 lg:grid-cols-3">
+        <div className="mx-auto mt-10 grid max-w-5xl gap-5 lg:grid-cols-3">
           {PROBLEM_CARDS.map(({ icon: Icon, key }) => (
             <div
               key={key}
-              className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8"
+              className="landing-card p-6"
             >
-              <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-slate-800">
-                <Icon className="h-6 w-6 text-cyan-400" />
+              <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-50">
+                <Icon className="h-5 w-5 text-cyan-700" />
               </div>
-              <h3 className="text-lg font-bold text-white">
+              <h3 className="text-lg font-bold text-slate-900">
                 {t(`${key}.title`)}
               </h3>
-              <p className="text-sm text-slate-400 mt-2">
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">
                 {t(`${key}.description`)}
               </p>
             </div>

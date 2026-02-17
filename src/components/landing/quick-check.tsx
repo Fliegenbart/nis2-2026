@@ -18,7 +18,6 @@ export function QuickCheck({ onComplete }: QuickCheckProps) {
   const locale = useLocale();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, AnswerValue>>({});
-  const [direction, setDirection] = useState(1);
 
   const questions = QUICK_CHECK_QUESTION_IDS.map((id) => ({
     question: getQuestionById(id)!,
@@ -35,7 +34,6 @@ export function QuickCheck({ onComplete }: QuickCheckProps) {
 
   function handleNext() {
     if (currentIndex < questions.length - 1) {
-      setDirection(1);
       setCurrentIndex((i) => i + 1);
     } else {
       onComplete(answers);
@@ -44,7 +42,6 @@ export function QuickCheck({ onComplete }: QuickCheckProps) {
 
   function handleBack() {
     if (currentIndex > 0) {
-      setDirection(-1);
       setCurrentIndex((i) => i - 1);
     }
   }
@@ -71,101 +68,93 @@ export function QuickCheck({ onComplete }: QuickCheckProps) {
   ];
 
   return (
-    <section
-      className="relative py-16 sm:py-20 bg-slate-950"
-      id="quick-check"
-    >
-      <div className="container mx-auto px-4">
-        <div className="mx-auto max-w-2xl">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gradient-cyan mb-2">
-              {t("title")}
-            </h2>
-            <p className="text-slate-400">{t("subtitle")}</p>
+    <div className="mx-auto max-w-2xl" id="quick-check">
+      <div className="mb-8 text-center">
+        <h2 className="text-3xl font-bold text-slate-900 mb-2">
+          {t("title")}
+        </h2>
+        <p className="text-slate-600">{t("subtitle")}</p>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-[0_20px_36px_-30px_rgba(15,23,42,0.28)]">
+        <div className="mb-6">
+          <div className="mb-3 flex items-center justify-between">
+            <span className="text-sm text-slate-500">
+              {t("question", {
+                current: currentIndex + 1,
+                total: questions.length,
+              })}
+            </span>
+            <span className="inline-flex items-center rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-700">
+              {tCategories(current.category.id)}
+            </span>
           </div>
-
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
-            {/* Card header area */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-slate-500">
-                  {t("question", {
-                    current: currentIndex + 1,
-                    total: questions.length,
-                  })}
-                </span>
-                <span className="inline-flex items-center rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-300">
-                  {tCategories(current.category.id)}
-                </span>
-              </div>
-              {/* Progress bar */}
-              <div className="h-1.5 w-full rounded-full bg-slate-800">
-                <motion.div
-                  className="h-full rounded-full bg-cyan-500"
-                  initial={false}
-                  animate={{ width: `${progress}%` }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
-                />
-              </div>
-            </div>
-
-            {/* Question + answers area */}
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentIndex}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2, ease: "easeInOut" }}
-              >
-                <h3 className="text-lg font-bold text-white mb-5 leading-relaxed">
-                  {current.question.text[locale as "de" | "en"]}
-                </h3>
-
-                <div className="space-y-3">
-                  {answerOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => handleAnswer(option.value)}
-                      className={`w-full flex items-center gap-3 rounded-xl border p-4 text-left transition-colors cursor-pointer ${
-                        currentAnswer === option.value
-                          ? `${option.selectedColor} border-cyan-500 bg-cyan-500/10`
-                          : "border-slate-700/50 bg-slate-800/50 text-slate-300 hover:border-cyan-500/50"
-                      }`}
-                    >
-                      {option.icon}
-                      <span className="font-medium">{option.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-            </AnimatePresence>
-
-            <div className="flex justify-between pt-6">
-              <button
-                onClick={handleBack}
-                disabled={currentIndex === 0}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                {t("back")}
-              </button>
-              <button
-                onClick={handleNext}
-                disabled={!currentAnswer}
-                className="inline-flex items-center gap-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg px-6 py-3 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {currentIndex === questions.length - 1
-                  ? t("finish")
-                  : t("next")}
-                {currentIndex < questions.length - 1 && (
-                  <ArrowRight className="h-4 w-4" />
-                )}
-              </button>
-            </div>
+          <div className="h-1.5 w-full rounded-full bg-slate-100">
+            <motion.div
+              className="h-full rounded-full bg-cyan-500"
+              initial={false}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+            />
           </div>
         </div>
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentIndex}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+          >
+            <h3 className="mb-5 text-lg font-bold leading-relaxed text-slate-900">
+              {current.question.text[locale as "de" | "en"]}
+            </h3>
+
+            <div className="space-y-3">
+              {answerOptions.map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => handleAnswer(option.value)}
+                  className={`w-full cursor-pointer rounded-xl border p-4 text-left transition-colors ${
+                    currentAnswer === option.value
+                      ? `${option.selectedColor} border-cyan-500 bg-cyan-50`
+                      : "border-slate-200 bg-white text-slate-700 hover:border-cyan-300"
+                  }`}
+                >
+                  <span className="flex items-center gap-3">
+                    {option.icon}
+                    <span className="font-medium">{option.label}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        </AnimatePresence>
+
+        <div className="flex justify-between pt-6">
+          <button
+            onClick={handleBack}
+            disabled={currentIndex === 0}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {t("back")}
+          </button>
+          <button
+            onClick={handleNext}
+            disabled={!currentAnswer}
+            className="inline-flex items-center gap-2 rounded-lg bg-cyan-500 px-6 py-3 font-bold text-slate-950 transition-colors hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {currentIndex === questions.length - 1
+              ? t("finish")
+              : t("next")}
+            {currentIndex < questions.length - 1 && (
+              <ArrowRight className="h-4 w-4" />
+            )}
+          </button>
+        </div>
       </div>
-    </section>
+    </div>
   );
 }

@@ -47,16 +47,10 @@ export function SocialProofStats({ locale }: { locale: string }) {
   const t = useTranslations("landing.socialProof");
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, amount: 0.3 });
-  const [isVisible, setIsVisible] = useState(false);
   const [tickerIndex, setTickerIndex] = useState(0);
   const [tickerVisible, setTickerVisible] = useState(true);
 
   const tickerMessages = locale === "de" ? TICKER_MESSAGES_DE : TICKER_MESSAGES_EN;
-
-  // Sync motion's useInView with the countUp trigger
-  useEffect(() => {
-    if (isInView) setIsVisible(true);
-  }, [isInView]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -69,9 +63,9 @@ export function SocialProofStats({ locale }: { locale: string }) {
     return () => clearInterval(interval);
   }, [tickerMessages.length]);
 
-  const scanned = useCountUp(1247, 1500, isVisible);
-  const atRisk = useCountUp(873, 1500, isVisible);
-  const secured = useCountUp(89, 1500, isVisible);
+  const scanned = useCountUp(1247, 1500, isInView);
+  const atRisk = useCountUp(873, 1500, isInView);
+  const secured = useCountUp(89, 1500, isInView);
 
   const statCards = [
     {

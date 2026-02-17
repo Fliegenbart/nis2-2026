@@ -1,17 +1,26 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { leadCaptureSchema } from "@/lib/validators";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const siteAuth = request.cookies.get("site-auth")?.value;
+    if (siteAuth !== "authenticated") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const data = leadCaptureSchema.parse(body);
 
     const audit = await prisma.audit.findUnique({
       where: { id: data.auditId },
+      select: { id: true, userId: true },
     });
     if (!audit) {
       return NextResponse.json({ error: "Audit not found" }, { status: 404 });
+    }
+    if (audit.userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const existingLead = await prisma.lead.findUnique({

@@ -1,13 +1,30 @@
 services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_DB=nis2_audit
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d nis2_audit"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   nis2-audit:
     build: .
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "3000:3000"
-    volumes:
-      - nis2-data:/app/data
     environment:
-      - DATABASE_URL=file:/app/data/nis2.db
-      - NEXT_PUBLIC_BASE_URL=http://5.9.106.75:3000
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/nis2_audit?schema=public
+      - NEXT_PUBLIC_BASE_URL=http://localhost:3000
+      - JWT_SECRET=replace-with-a-long-random-secret
+      - SITE_PASSWORD=replace-with-a-strong-password
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000"]
@@ -16,5 +33,5 @@ services:
       retries: 3
 
 volumes:
-  nis2-data:
+  postgres-data:
     driver: local

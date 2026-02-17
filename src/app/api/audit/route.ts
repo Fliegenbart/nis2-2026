@@ -1,9 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createAuditSchema } from "@/lib/validators";
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const siteAuth = request.cookies.get("site-auth")?.value;
+    if (siteAuth !== "authenticated") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const data = createAuditSchema.parse(body);
 

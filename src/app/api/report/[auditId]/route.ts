@@ -1,13 +1,18 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generateAuditPDF } from "@/lib/pdf-generator";
+import { ensureAuditAccess } from "@/lib/audit-access";
 
 export async function GET(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ auditId: string }> }
 ) {
   try {
     const { auditId } = await params;
+    const access = await ensureAuditAccess(request, auditId);
+    if (!access.ok) {
+      return NextResponse.json({ error: access.error }, { status: access.status });
+    }
 
     const audit = await prisma.audit.findUnique({
       where: { id: auditId },

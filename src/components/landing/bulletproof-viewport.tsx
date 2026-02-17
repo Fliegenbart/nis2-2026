@@ -64,40 +64,29 @@ export function BulletproofViewport() {
   ] as const;
 
   return (
-    <section
-      className="bg-slate-950 py-32 sm:py-40"
-      id="bulletproof"
-    >
+    <section className="landing-section" id="bulletproof">
       <div className="mx-auto max-w-6xl px-4">
-        {/* ── Section Headline ────────────────────────────────── */}
-        <h2 className="mb-16 text-center text-3xl font-extrabold tracking-tight sm:text-4xl">
-          <span className="text-white">Wir machen Ihr Unternehmen </span>
-          <span className="text-gradient-cyan">bulletproof</span>
+        <h2 className="mb-10 text-center text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+          <span>Wir machen Ihr Unternehmen </span>
+          <span className="bg-gradient-to-r from-emerald-500 to-cyan-600 bg-clip-text text-transparent">
+            bulletproof
+          </span>
         </h2>
 
-        {/* ── Two-column grid ─────────────────────────────────── */}
-        <div className="grid gap-12 lg:grid-cols-2 items-start">
-          {/* ─── Left: Calculator card ────────────────────────── */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
-            {/* Icon */}
-            <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-slate-800">
-              <Calculator className="h-6 w-6 text-slate-400" />
+        <div className="grid items-start gap-6 lg:grid-cols-2">
+          <div className="landing-card p-6 sm:p-8">
+            <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100">
+              <Calculator className="h-5 w-5 text-slate-700" />
             </div>
 
-            {/* Title + subtitle */}
-            <h3 className="text-xl font-bold text-white">
-              {tCalc("title")}
-            </h3>
-            <p className="mt-1 text-sm text-slate-500">
-              {tCalc("subtitle")}
-            </p>
+            <h3 className="text-xl font-bold text-slate-900">{tCalc("title")}</h3>
+            <p className="mt-1 text-sm text-slate-600">{tCalc("subtitle")}</p>
 
-            {/* Input fields */}
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <label
                   htmlFor="bp-revenue"
-                  className="block text-xs font-medium uppercase tracking-wider text-slate-500"
+                  className="block text-xs font-semibold uppercase tracking-wider text-slate-600"
                 >
                   {tCalc("revenue")}
                 </label>
@@ -108,13 +97,13 @@ export function BulletproofViewport() {
                   placeholder={tCalc("revenuePlaceholder")}
                   value={revenue}
                   onChange={(e) => setRevenue(e.target.value)}
-                  className="w-full rounded-xl border border-slate-700/50 bg-slate-800/50 px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/30 transition-colors"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-100"
                 />
               </div>
               <div className="space-y-2">
                 <label
                   htmlFor="bp-employees"
-                  className="block text-xs font-medium uppercase tracking-wider text-slate-500"
+                  className="block text-xs font-semibold uppercase tracking-wider text-slate-600"
                 >
                   {tCalc("employees")}
                 </label>
@@ -125,41 +114,38 @@ export function BulletproofViewport() {
                   placeholder={tCalc("employeesPlaceholder")}
                   value={employees}
                   onChange={(e) => setEmployees(e.target.value)}
-                  className="w-full rounded-xl border border-slate-700/50 bg-slate-800/50 px-4 py-3 text-sm text-white placeholder:text-slate-600 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/30 transition-colors"
+                  className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-100"
                 />
               </div>
             </div>
 
-            {/* Results */}
             {hasInput && (
-              <div className="mt-8 space-y-4">
-                {/* Fine amount */}
-                <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-6 text-center">
-                  <p className="text-xs font-medium uppercase tracking-widest text-slate-500 mb-2">
+              <div className="mt-6 space-y-4">
+                <div className="landing-muted-surface p-6 text-center">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-600">
                     {tCalc("result")}
                   </p>
-                  <p className="text-3xl font-extrabold font-mono text-rose-400">
+                  <p className="font-mono text-3xl font-extrabold text-rose-600">
                     {formatFine(animatedFine, locale)}
                   </p>
                 </div>
 
-                {/* Affected status */}
-                <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-4">
+                <div className="landing-muted-surface p-4">
                   {affected ? (
                     <div className="flex items-center gap-3">
-                      <AlertTriangle className="h-5 w-5 shrink-0 text-amber-400" />
-                      <p className="text-sm font-medium text-white">
+                      <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" />
+                      <p className="text-sm font-semibold text-slate-900">
                         {tCalc("affected")}
                       </p>
                     </div>
                   ) : (
                     <div className="flex items-center gap-3">
-                      <Info className="h-5 w-5 shrink-0 text-slate-400" />
+                      <Info className="h-5 w-5 shrink-0 text-slate-500" />
                       <div>
-                        <p className="text-sm font-medium text-white">
+                        <p className="text-sm font-semibold text-slate-900">
                           {tCalc("notAffected")}
                         </p>
-                        <p className="text-xs text-slate-500 mt-0.5">
+                        <p className="mt-0.5 text-xs text-slate-600">
                           {tCalc("notAffectedHint")}
                         </p>
                       </div>
@@ -170,34 +156,31 @@ export function BulletproofViewport() {
             )}
           </div>
 
-          {/* ─── Right: Guarantee card ────────────────────────── */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
-            {/* Icon */}
-            <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-slate-800">
-              <Shield className="h-6 w-6 text-slate-400" />
+          <div className="relative overflow-hidden rounded-2xl border border-emerald-300 bg-gradient-to-b from-emerald-50 to-teal-50 p-6 shadow-[0_24px_44px_-30px_rgba(6,95,70,0.45)] sm:p-8">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_95%_5%,rgba(16,185,129,0.22),transparent_34%)]" />
+
+            <div className="relative mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-100">
+              <Shield className="h-5 w-5 text-emerald-700" />
             </div>
 
-            {/* Title */}
-            <h3 className="text-xl font-bold text-white">
-              {tGuarantee("title")}
-            </h3>
+            <h3 className="relative text-2xl font-extrabold text-emerald-900">{tGuarantee("title")}</h3>
+            <p className="relative mt-2 text-sm text-emerald-900/85">{tGuarantee("subtitle")}</p>
 
-            {/* Guarantee items */}
-            <div className="mt-6 space-y-4">
+            <div className="relative mt-6 space-y-3">
               {guarantees.map(({ key }) => (
-                <div key={key} className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 shrink-0 text-cyan-500" />
-                  <span className="text-sm text-white">
+                <div key={key} className="rounded-lg border border-emerald-300 bg-white/70 px-4 py-2.5">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 shrink-0 text-emerald-600" />
+                    <span className="text-sm font-semibold text-emerald-950">
                     {tGuarantee(key)}
-                  </span>
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
 
-            {/* Tagline */}
-            <p className="mt-8 text-sm text-slate-500">
-              {tGuarantee("tagline")}
-            </p>
+            <p className="relative mt-6 text-sm font-semibold text-emerald-900">{tGuarantee("tagline")}</p>
+            <p className="relative mt-2 text-sm leading-relaxed text-emerald-900/80">{tGuarantee("explanation")}</p>
           </div>
         </div>
       </div>

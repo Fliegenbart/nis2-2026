@@ -1,12 +1,26 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { ensureAuditAccess } from "@/lib/audit-access";
 
 export async function PATCH(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ auditId: string; actionId: string }> }
 ) {
   try {
-    const { actionId } = await params;
+    const { auditId, actionId } = await params;
+    const access = await ensureAuditAccess(request, auditId);
+    if (!access.ok) {
+      return NextResponse.json({ error: access.error }, { status: access.status });
+    }
+
+    const existing = await prisma.actionItem.findFirst({
+      where: { id: actionId, auditId },
+      select: { id: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Action item not found" }, { status: 404 });
+    }
+
     const body = await request.json();
 
     const actionItem = await prisma.actionItem.update({
@@ -32,13 +46,22 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
-  { params }: { params: Promise<{ actionId: string }> }
+  request: NextRequest,
+  { params }: { params: Promise<{ auditId: string; actionId: string }> }
 ) {
   try {
-    const { actionId } = await params;
+    const { auditId, actionId } = await params;
+    const access = await ensureAuditAccess(request, auditId);
+    if (!access.ok) {
+      return NextResponse.json({ error: access.error }, { status: access.status });
+    }
 
-    await prisma.actionItem.delete({ where: { id: actionId } });
+    const deleted = await prisma.actionItem.deleteMany({
+      where: { id: actionId, auditId },
+    });
+    if (deleted.count === 0) {
+      return NextResponse.json({ error: "Action item not found" }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true });
   } catch {

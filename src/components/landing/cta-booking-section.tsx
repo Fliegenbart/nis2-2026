@@ -39,29 +39,30 @@ export function CTABookingSection() {
   }
 
   const inputClasses =
-    "w-full rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-3.5 text-sm text-white placeholder:text-slate-600 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/30 transition-colors";
+    "w-full rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-100";
 
   return (
-    <section className="bg-slate-950 py-32 sm:py-40" id="booking">
+    <section
+      className="landing-section bg-[radial-gradient(circle_at_15%_0%,rgba(251,113,133,0.28),transparent_38%),radial-gradient(circle_at_100%_100%,rgba(16,185,129,0.24),transparent_36%),#fff]"
+      id="booking"
+    >
       <div className="mx-auto max-w-xl px-4">
-        {/* Section header */}
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
+          <p className="landing-eyebrow">Final Step</p>
+          <h2 className="mt-4 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
             {t("title")}
           </h2>
-          <p className="mt-4 text-lg text-slate-400 leading-relaxed">
+          <p className="mt-4 text-lg leading-relaxed text-slate-700">
             {t("subtitle")}
           </p>
         </div>
 
-        {/* Form card */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8">
-          {/* Calendar icon + form title */}
+        <div className="landing-card p-8">
           <div className="mb-8 flex items-center justify-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800">
-              <Calendar className="h-4 w-4 text-slate-400" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-50">
+              <Calendar className="h-4 w-4 text-cyan-700" />
             </div>
-            <h3 className="text-lg font-semibold text-white">
+            <h3 className="text-lg font-semibold text-slate-900">
               {t("formTitle")}
             </h3>
           </div>
@@ -69,8 +70,8 @@ export function CTABookingSection() {
           {submitted ? (
             <div className="flex flex-col items-center gap-4 py-10">
               <CheckCircle className="h-10 w-10 text-emerald-400" />
-              <p className="text-xl font-bold text-white">{t("success")}</p>
-              <p className="text-sm text-slate-400 text-center">
+              <p className="text-xl font-bold text-slate-900">{t("success")}</p>
+              <p className="text-center text-sm text-slate-600">
                 {t("successHint")}
               </p>
             </div>
@@ -144,7 +145,7 @@ export function CTABookingSection() {
                 )}
               </button>
 
-              <p className="text-center text-xs text-slate-600 pt-1">
+              <p className="pt-1 text-center text-xs text-slate-500">
                 {t("noCommitment")}
               </p>
             </form>
