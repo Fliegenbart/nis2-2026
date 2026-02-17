@@ -129,12 +129,22 @@ export function LeadCaptureModal({
       console.error("Lead capture submit error:", submitError);
       const message = submitError instanceof Error ? submitError.message : "";
       const sessionExpired = message.includes(":401:");
+      const backendUnavailable =
+        message.includes(":503:") ||
+        message.toLowerCase().includes("database unavailable") ||
+        message.toLowerCase().includes("schema not up to date");
 
       if (sessionExpired) {
         setError(
           locale === "de"
             ? "Sitzung abgelaufen. Bitte Seite neu laden und erneut einloggen."
             : "Session expired. Please reload the page and sign in again."
+        );
+      } else if (backendUnavailable) {
+        setError(
+          locale === "de"
+            ? "Backend wird gerade aktualisiert. Bitte in 1-2 Minuten erneut versuchen."
+            : "Backend is being updated. Please try again in 1-2 minutes."
         );
       } else {
         setError(

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { saveAnswersSchema } from "@/lib/validators";
 import { ensureAuditAccess } from "@/lib/audit-access";
@@ -49,9 +50,28 @@ export async function POST(
 
     return NextResponse.json({ saved: results.length });
   } catch (error) {
+    console.error("POST /api/audit/[auditId]/answers failed:", error);
+
     if (error instanceof Error && error.name === "ZodError") {
       return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
+
+    if (error instanceof Prisma.PrismaClientInitializationError) {
+      return NextResponse.json(
+        { error: "Database unavailable" },
+        { status: 503 }
+      );
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2021" || error.code === "P2022") {
+        return NextResponse.json(
+          { error: "Database schema not up to date" },
+          { status: 503 }
+        );
+      }
+    }
+
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
