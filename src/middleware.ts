@@ -20,15 +20,16 @@ export default function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Let API routes handle auth and return proper JSON errors.
+  // Redirecting API requests to /login breaks client-side fetch flows.
+  if (pathname.startsWith("/api")) {
+    return NextResponse.next();
+  }
+
   // Check for site-wide auth cookie
   const authCookie = request.cookies.get("site-auth");
   if (!authCookie || authCookie.value !== "authenticated") {
     return NextResponse.redirect(new URL("/login", request.url));
-  }
-
-  // For API routes, just pass through (already authenticated)
-  if (pathname.startsWith("/api")) {
-    return NextResponse.next();
   }
 
   // Consultant routes don't use i18n middleware

@@ -43,12 +43,36 @@ export function LeadCaptureModal({
     }
   }, [open, companyName, initialCompanyName]);
 
+  async function readApiError(response: Response, fallback: string) {
+    try {
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        const body = (await response.json()) as { error?: string };
+        if (body.error) return body.error;
+      } else {
+        const text = await response.text();
+        if (text) return text.slice(0, 160);
+      }
+    } catch {
+      // Ignore parsing errors and use fallback.
+    }
+    return fallback;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setIsSubmitting(true);
 
     try {
+      if (Object.keys(quickCheckAnswers).length === 0) {
+        throw new Error(
+          locale === "de"
+            ? "Quick-Check Antworten fehlen. Bitte Check erneut starten."
+            : "Quick check answers are missing. Please run the check again."
+        );
+      }
+
       // 1. Create audit
       const auditRes = await fetch("/api/audit", {
         method: "POST",
@@ -57,7 +81,8 @@ export function LeadCaptureModal({
         body: JSON.stringify({ locale, companyName: companyName || undefined }),
       });
       if (!auditRes.ok) {
-        throw new Error("Audit creation failed");
+        const reason = await readApiError(auditRes, "Audit creation failed");
+        throw new Error(`audit:${auditRes.status}:${reason}`);
       }
       const audit = await auditRes.json();
 
@@ -77,7 +102,8 @@ export function LeadCaptureModal({
         body: JSON.stringify({ answers: answersPayload }),
       });
       if (!answersRes.ok) {
-        throw new Error("Saving answers failed");
+        const reason = await readApiError(answersRes, "Saving answers failed");
+        throw new Error(`answers:${answersRes.status}:${reason}`);
       }
 
       // 3. Create lead
@@ -93,18 +119,30 @@ export function LeadCaptureModal({
         }),
       });
       if (!leadRes.ok) {
-        throw new Error("Lead creation failed");
+        const reason = await readApiError(leadRes, "Lead creation failed");
+        throw new Error(`lead:${leadRes.status}:${reason}`);
       }
 
       // 4. Redirect to dashboard
       router.push(`/${locale}/audit/${audit.id}/dashboard`);
     } catch (submitError) {
       console.error("Lead capture submit error:", submitError);
-      setError(
-        locale === "de"
-          ? "Scanner konnte nicht abgeschlossen werden. Bitte erneut versuchen."
-          : "Scanner could not be completed. Please try again."
-      );
+      const message = submitError instanceof Error ? submitError.message : "";
+      const sessionExpired = message.includes(":401:");
+
+      if (sessionExpired) {
+        setError(
+          locale === "de"
+            ? "Sitzung abgelaufen. Bitte Seite neu laden und erneut einloggen."
+            : "Session expired. Please reload the page and sign in again."
+        );
+      } else {
+        setError(
+          locale === "de"
+            ? "Scanner konnte nicht abgeschlossen werden. Bitte erneut versuchen."
+            : "Scanner could not be completed. Please try again."
+        );
+      }
       setIsSubmitting(false);
     }
   }
