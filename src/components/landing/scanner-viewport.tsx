@@ -42,6 +42,7 @@ export function ScannerViewport({ locale, onStartScan, children }: ScannerViewpo
   const [tickerIndex, setTickerIndex] = useState(0);
   const [tickerVisible, setTickerVisible] = useState(true);
   const [targetUrl, setTargetUrl] = useState("");
+  const [urlError, setUrlError] = useState("");
 
   const hasChildren = !!children;
   const numberLocale = locale === "de" ? "de-DE" : "en-US";
@@ -103,7 +104,18 @@ export function ScannerViewport({ locale, onStartScan, children }: ScannerViewpo
 
   function handleStartScan(e: React.FormEvent) {
     e.preventDefault();
-    onStartScan?.(targetUrl.trim());
+    const trimmedUrl = targetUrl.trim();
+    if (!trimmedUrl) {
+      setUrlError(
+        locale === "de"
+          ? "Bitte zuerst Ihre Website-URL eingeben, um den Check freizuschalten."
+          : "Please enter your website URL first to unlock the check."
+      );
+      return;
+    }
+
+    setUrlError("");
+    onStartScan?.(trimmedUrl);
   }
 
   return (
@@ -130,8 +142,14 @@ export function ScannerViewport({ locale, onStartScan, children }: ScannerViewpo
               className="mt-6 grid gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:grid-cols-[1fr_auto]"
             >
               <input
+                id="scanner-target-url"
                 value={targetUrl}
-                onChange={(e) => setTargetUrl(e.target.value)}
+                onChange={(e) => {
+                  setTargetUrl(e.target.value);
+                  if (urlError) {
+                    setUrlError("");
+                  }
+                }}
                 placeholder={tScanner("placeholder")}
                 className="h-11 rounded-lg border border-slate-300 bg-white px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-100"
               />
@@ -142,6 +160,10 @@ export function ScannerViewport({ locale, onStartScan, children }: ScannerViewpo
                 {tScanner("cta")}
               </button>
             </form>
+
+            {urlError && (
+              <p className="mt-3 text-sm font-medium text-rose-600">{urlError}</p>
+            )}
 
             <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
               {scannerPills.map((pill) => (

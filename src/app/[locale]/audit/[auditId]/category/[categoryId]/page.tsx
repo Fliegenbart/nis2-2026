@@ -62,6 +62,7 @@ export default function CategoryAuditPage() {
             categories={NIS2_CATEGORIES}
             currentCategoryId={categoryId}
             categoryScores={categoryScores}
+            auditId={auditId}
           />
         </div>
       </div>
