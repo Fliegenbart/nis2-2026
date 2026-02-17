@@ -1,21 +1,20 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { NextRequest } from "next/server";
-import { randomBytes } from "crypto";
 import type { UserRole } from "@prisma/client";
 import { prisma } from "./prisma";
 
 const COOKIE_NAME = "consultant-session";
-const DEV_JWT_SECRET = randomBytes(32).toString("hex");
 
 function getJwtSecret(): string {
-  if (process.env.JWT_SECRET) {
-    return process.env.JWT_SECRET;
+  const secret = process.env.JWT_SECRET?.trim();
+  if (secret) {
+    return secret;
   }
   if (process.env.NODE_ENV === "production") {
     throw new Error("JWT_SECRET env var is required in production");
   }
-  return DEV_JWT_SECRET;
+  throw new Error("JWT_SECRET env var is required");
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -30,12 +29,14 @@ export async function verifyPassword(
 }
 
 export function createToken(userId: string): string {
-  return jwt.sign({ userId }, getJwtSecret(), { expiresIn: "7d" });
+  const secret = getJwtSecret();
+  return jwt.sign({ userId }, secret, { expiresIn: "7d" });
 }
 
 export function verifyToken(token: string): { userId: string } | null {
+  const secret = getJwtSecret();
   try {
-    return jwt.verify(token, getJwtSecret()) as { userId: string };
+    return jwt.verify(token, secret) as { userId: string };
   } catch {
     return null;
   }

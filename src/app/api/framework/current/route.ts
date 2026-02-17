@@ -1,22 +1,52 @@
 import { NextRequest, NextResponse } from "next/server";
 import { CONSULTANT_WRITE_ROLES, requireAuthWithRoles } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { buildControlCatalog } from "@/lib/control-catalog";
 import { getMethodologyManifest } from "@/lib/audit-methodology";
 
-export async function GET() {
-  const manifest = getMethodologyManifest();
-  const controls = buildControlCatalog();
+export async function GET(request: NextRequest) {
+  const requestedFrameworkVersion =
+    request.nextUrl.searchParams.get("frameworkVersion");
 
-  const dbControlCount = await prisma.controlCatalog.count({
-    where: { frameworkVersion: manifest.frameworkVersion },
+  const latestControl = await prisma.controlCatalog.findFirst({
+    select: {
+      frameworkVersion: true,
+      methodologyVersion: true,
+    },
+    orderBy: { updatedAt: "desc" },
   });
 
+  const frameworkVersion =
+    requestedFrameworkVersion ?? latestControl?.frameworkVersion;
+  if (!frameworkVersion) {
+    return NextResponse.json(
+      { error: "Control catalog is not seeded" },
+      { status: 503 }
+    );
+  }
+
+  const controls = await prisma.controlCatalog.findMany({
+    where: { frameworkVersion },
+    orderBy: [{ categoryId: "asc" }, { questionId: "asc" }],
+  });
+  if (controls.length === 0) {
+    return NextResponse.json(
+      { error: `No controls found for frameworkVersion=${frameworkVersion}` },
+      { status: 404 }
+    );
+  }
+
+  const manifest = getMethodologyManifest();
+  const methodologyVersion = controls[0].methodologyVersion;
+
   return NextResponse.json({
-    ...manifest,
+    frameworkVersion,
+    methodologyVersion,
+    methodologyName: manifest.methodologyName,
+    severityWeight: manifest.severityWeight,
+    answerWeight: manifest.answerWeight,
     controlCount: controls.length,
-    dbControlCount,
     categories: Array.from(new Set(controls.map((c) => c.categoryId))).length,
+    controls,
   });
 }
 
@@ -30,32 +60,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const controls = buildControlCatalog();
-  await prisma.$transaction(
-    controls.map((control) =>
-      prisma.controlCatalog.upsert({
-        where: {
-          frameworkVersion_questionId: {
-            frameworkVersion: control.frameworkVersion,
-            questionId: control.questionId,
-          },
-        },
-        update: {
-          methodologyVersion: control.methodologyVersion,
-          categoryId: control.categoryId,
-          severity: control.severity,
-          weight: control.weight,
-          articleRef: control.articleRef,
-          legalReference: control.legalReference,
-          evidenceRequired: control.evidenceRequired,
-        },
-        create: control,
-      })
-    )
+  return NextResponse.json(
+    {
+      error:
+        "Manual sync endpoint deprecated. Use `prisma db seed` to refresh ControlCatalog.",
+    },
+    { status: 405 }
   );
-
-  return NextResponse.json({
-    synced: controls.length,
-    frameworkVersion: controls[0]?.frameworkVersion,
-  });
 }

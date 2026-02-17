@@ -180,6 +180,22 @@ export async function POST(
           toStatus: status,
           changedByUserId: user.id,
           note: "Finding created",
+          metadata: {
+            event: "finding_created",
+            changedFields: {
+              title: { from: null, to: title },
+              description: { from: null, to: body.description || null },
+              severity: { from: null, to: severity },
+              status: { from: null, to: status },
+              dueDate: {
+                from: null,
+                to: dueDate ? dueDate.toISOString() : null,
+              },
+              questionId: { from: null, to: body.questionId || null },
+              categoryId: { from: null, to: body.categoryId || null },
+              reviewOwnerUserId: { from: null, to: reviewOwnerUserId },
+            },
+          },
         },
       });
 

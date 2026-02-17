@@ -62,6 +62,7 @@ export async function GET(
           "changedByName",
           "changedByRole",
           "note",
+          "metadata",
         ],
         ...history.map((entry) => [
           entry.createdAt.toISOString(),
@@ -73,6 +74,7 @@ export async function GET(
           entry.changedBy?.name || "",
           entry.changedBy?.role || "",
           entry.note || "",
+          entry.metadata ? JSON.stringify(entry.metadata) : "",
         ]),
       ];
 

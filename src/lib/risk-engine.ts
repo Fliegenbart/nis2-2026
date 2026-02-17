@@ -1,4 +1,8 @@
+import type { PrismaClient } from "@prisma/client";
 import { calculateMaxFine } from "@/lib/fine-calculator";
+import { ANSWER_WEIGHT } from "@/lib/audit-methodology";
+import { prisma } from "@/lib/prisma";
+import type { AnswerValue } from "@/data/nis2-framework";
 
 export type RiskLevelV1 = "low" | "medium" | "high" | "critical";
 
@@ -15,6 +19,14 @@ export interface RiskProfileV1 {
   potentialFine: number;
   confidence: number;
   rationale: string[];
+}
+
+export interface ComputedRiskInputV1 {
+  input: RiskInputV1;
+  frameworkVersion: string;
+  methodologyVersion: string;
+  answeredControlCount: number;
+  totalControlCount: number;
 }
 
 const RISK_LEVEL_ORDER: RiskLevelV1[] = ["low", "medium", "high", "critical"];
@@ -72,5 +84,112 @@ export function calculateRiskProfileV1(input: RiskInputV1): RiskProfileV1 {
     potentialFine,
     confidence,
     rationale,
+  };
+}
+
+export async function buildRiskInputFromDatabaseV1(
+  auditId: string,
+  db: PrismaClient = prisma
+): Promise<ComputedRiskInputV1 | null> {
+  const audit = await db.audit.findUnique({
+    where: { id: auditId },
+    select: {
+      id: true,
+      revenue: true,
+      employeeCount: true,
+      frameworkVersion: true,
+      methodologyVersion: true,
+      answers: {
+        select: {
+          questionId: true,
+          value: true,
+        },
+      },
+    },
+  });
+  if (!audit) {
+    return null;
+  }
+
+  const controls = await db.controlCatalog.findMany({
+    where: {
+      frameworkVersion: audit.frameworkVersion,
+      methodologyVersion: audit.methodologyVersion,
+    },
+    select: {
+      questionId: true,
+      severity: true,
+      weight: true,
+    },
+  });
+  if (controls.length === 0) {
+    throw new Error(
+      `Control catalog missing for ${audit.frameworkVersion}/${audit.methodologyVersion}`
+    );
+  }
+
+  const answersByQuestion = new Map<string, AnswerValue>(
+    audit.answers.map((answer) => [answer.questionId, answer.value as AnswerValue])
+  );
+
+  let weightedEarned = 0;
+  let weightedMax = 0;
+  let gapCount = 0;
+  let criticalGapCount = 0;
+  let answeredControlCount = 0;
+
+  for (const control of controls) {
+    const answer = answersByQuestion.get(control.questionId);
+    if (!answer) {
+      continue;
+    }
+
+    const answerWeight = ANSWER_WEIGHT[answer];
+    if (answerWeight === null) {
+      continue;
+    }
+
+    answeredControlCount += 1;
+    weightedMax += control.weight;
+    weightedEarned += control.weight * answerWeight;
+
+    if (answer !== "fulfilled") {
+      gapCount += 1;
+      if (control.severity === "kritisch") {
+        criticalGapCount += 1;
+      }
+    }
+  }
+
+  const overallScore =
+    weightedMax > 0 ? Math.round((weightedEarned / weightedMax) * 100) : 0;
+
+  return {
+    input: {
+      overallScore,
+      criticalGapCount,
+      gapCount,
+      revenue: audit.revenue,
+      employeeCount: audit.employeeCount,
+    },
+    frameworkVersion: audit.frameworkVersion,
+    methodologyVersion: audit.methodologyVersion,
+    answeredControlCount,
+    totalControlCount: controls.length,
+  };
+}
+
+export async function calculateRiskProfileForAuditV1(
+  auditId: string,
+  db: PrismaClient = prisma
+): Promise<(RiskProfileV1 & { input: RiskInputV1 }) | null> {
+  const computed = await buildRiskInputFromDatabaseV1(auditId, db);
+  if (!computed) {
+    return null;
+  }
+
+  return {
+    ...calculateRiskProfileV1(computed.input),
+    input: computed.input,
   };
 }

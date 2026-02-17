@@ -40,6 +40,16 @@ const FINDING_INCLUDE = {
   },
 } satisfies Prisma.FindingInclude;
 
+type MetadataDiffValue = string | number | boolean | null;
+type FindingFieldDiff = {
+  from: MetadataDiffValue;
+  to: MetadataDiffValue;
+};
+
+function toMetadataDate(value: Date | null | undefined): string | null {
+  return value ? value.toISOString() : null;
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ auditId: string; findingId: string }> }
@@ -66,7 +76,13 @@ export async function PATCH(
       where: { id: findingId, auditId },
       select: {
         id: true,
+        title: true,
+        description: true,
+        severity: true,
         status: true,
+        dueDate: true,
+        questionId: true,
+        categoryId: true,
         reviewOwnerUserId: true,
         audit: {
           select: { organizationId: true },
@@ -230,6 +246,72 @@ export async function PATCH(
     }
 
     const note = typeof body.note === "string" ? body.note.trim() : null;
+    const changedFields: Record<string, FindingFieldDiff> = {};
+
+    if (updates.title !== undefined && typeof updates.title === "string") {
+      if (existing.title !== updates.title) {
+        changedFields.title = { from: existing.title, to: updates.title };
+      }
+    }
+    if (updates.description !== undefined) {
+      const nextValue = (updates.description ?? null) as string | null;
+      if ((existing.description ?? null) !== nextValue) {
+        changedFields.description = {
+          from: existing.description ?? null,
+          to: nextValue,
+        };
+      }
+    }
+    if (updates.severity !== undefined && typeof updates.severity === "string") {
+      if (existing.severity !== updates.severity) {
+        changedFields.severity = { from: existing.severity, to: updates.severity };
+      }
+    }
+    if (updates.dueDate !== undefined) {
+      const nextDueDate =
+        updates.dueDate instanceof Date ? updates.dueDate : null;
+      const fromDueDate = toMetadataDate(existing.dueDate);
+      const toDueDate = toMetadataDate(nextDueDate);
+      if (fromDueDate !== toDueDate) {
+        changedFields.dueDate = {
+          from: fromDueDate,
+          to: toDueDate,
+        };
+      }
+    }
+    if (updates.questionId !== undefined) {
+      const nextValue = (updates.questionId ?? null) as string | null;
+      if ((existing.questionId ?? null) !== nextValue) {
+        changedFields.questionId = {
+          from: existing.questionId ?? null,
+          to: nextValue,
+        };
+      }
+    }
+    if (updates.categoryId !== undefined) {
+      const nextValue = (updates.categoryId ?? null) as string | null;
+      if ((existing.categoryId ?? null) !== nextValue) {
+        changedFields.categoryId = {
+          from: existing.categoryId ?? null,
+          to: nextValue,
+        };
+      }
+    }
+    if (updates.reviewOwnerUserId !== undefined) {
+      const nextValue = (updates.reviewOwnerUserId ?? null) as string | null;
+      if ((existing.reviewOwnerUserId ?? null) !== nextValue) {
+        changedFields.reviewOwnerUserId = {
+          from: existing.reviewOwnerUserId ?? null,
+          to: nextValue,
+        };
+      }
+    }
+    if (statusChangeRequested && isFindingStatus(body.status)) {
+      changedFields.status = {
+        from: existing.status,
+        to: body.status,
+      };
+    }
 
     const finding = await prisma.$transaction(async (tx) => {
       const updated = await tx.finding.update({
@@ -246,6 +328,10 @@ export async function PATCH(
             toStatus: body.status,
             changedByUserId: user.id,
             note: note || null,
+            metadata: {
+              event: "status_change",
+              changedFields,
+            },
           },
         });
       }

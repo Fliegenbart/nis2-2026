@@ -245,6 +245,7 @@ model FindingStatusHistory {
   toStatus        FindingStatus
   changedByUserId String?
   note            String?
+  metadata        Json?
   createdAt       DateTime       @default(now())
 
   finding   Finding @relation(fields: [findingId], references: [id], onDelete: Cascade)
