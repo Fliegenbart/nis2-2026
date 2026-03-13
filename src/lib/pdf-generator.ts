@@ -11,6 +11,13 @@ interface AuditData {
   locale: string;
   clientName?: string | null;
   consultantName?: string | null;
+  deliveryCompleteness?: {
+    assessmentCompleted: boolean;
+    policiesApproved: boolean;
+    trainingsComplete: boolean;
+    openReviewCases: number;
+    progress: number;
+  };
 }
 
 interface AnswerData {
@@ -68,6 +75,13 @@ const translations = {
     high: "Hoch",
     medium: "Mittel",
     low: "Niedrig",
+    deliveryCompleteness: "Delivery Completeness",
+    assessmentStatus: "Assessment abgeschlossen",
+    policyStatus: "Policies freigegeben",
+    trainingStatus: "Trainings vollständig",
+    redFlags: "Offene Human Reviews",
+    yes: "Ja",
+    no: "Nein",
   },
   en: {
     title: "NIS2 Compliance Audit Report",
@@ -108,6 +122,13 @@ const translations = {
     high: "High",
     medium: "Medium",
     low: "Low",
+    deliveryCompleteness: "Delivery Completeness",
+    assessmentStatus: "Assessment completed",
+    policyStatus: "Policies approved",
+    trainingStatus: "Trainings complete",
+    redFlags: "Open human reviews",
+    yes: "Yes",
+    no: "No",
   },
 };
 
@@ -269,8 +290,28 @@ export async function generateAuditPDF(
   doc.setFontSize(20);
   doc.text(t.executiveSummary, 20, 25);
 
+  if (audit.deliveryCompleteness) {
+    const delivery = audit.deliveryCompleteness;
+    autoTable(doc, {
+      startY: 35,
+      head: [[t.deliveryCompleteness, locale === "de" ? "Status" : "Status"]],
+      body: [
+        [t.assessmentStatus, delivery.assessmentCompleted ? t.yes : t.no],
+        [t.policyStatus, delivery.policiesApproved ? t.yes : t.no],
+        [t.trainingStatus, delivery.trainingsComplete ? t.yes : t.no],
+        [t.redFlags, String(delivery.openReviewCases)],
+      ],
+      styles: { fontSize: 9, cellPadding: 3 },
+      headStyles: { fillColor: [8, 145, 178] },
+      columnStyles: {
+        0: { cellWidth: 120 },
+        1: { cellWidth: 40 },
+      },
+    });
+  }
+
   autoTable(doc, {
-    startY: 40,
+    startY: audit.deliveryCompleteness ? 85 : 40,
     head: [
       [
         locale === "de" ? "Kategorie" : "Category",

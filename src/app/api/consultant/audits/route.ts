@@ -5,6 +5,7 @@ import {
   requireAuthWithRoles,
 } from "@/lib/auth";
 import { FRAMEWORK_VERSION, METHODOLOGY_VERSION } from "@/lib/audit-methodology";
+import { ensureComplianceArtifactsForAudit } from "@/lib/compliance-program";
 
 export async function POST(request: NextRequest) {
   try {
@@ -56,6 +57,8 @@ export async function POST(request: NextRequest) {
         clientId: linkedClient?.id || null,
       },
     });
+
+    await ensureComplianceArtifactsForAudit(audit.id);
 
     return NextResponse.json({ audit }, { status: 201 });
   } catch (error) {

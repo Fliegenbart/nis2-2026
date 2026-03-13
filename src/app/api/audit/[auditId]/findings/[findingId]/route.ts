@@ -13,6 +13,7 @@ import {
   isFindingStatus,
   parseOptionalDate,
 } from "@/lib/workflow";
+import { ensureComplianceArtifactsForAudit } from "@/lib/compliance-program";
 
 const FINDING_INCLUDE = {
   createdBy: {
@@ -339,6 +340,8 @@ export async function PATCH(
       return updated;
     });
 
+    await ensureComplianceArtifactsForAudit(auditId);
+
     return NextResponse.json({ finding });
   } catch {
     return NextResponse.json(
@@ -365,6 +368,8 @@ export async function DELETE(
     if (deleted.count === 0) {
       return NextResponse.json({ error: "Finding not found" }, { status: 404 });
     }
+
+    await ensureComplianceArtifactsForAudit(auditId);
 
     return NextResponse.json({ success: true });
   } catch {

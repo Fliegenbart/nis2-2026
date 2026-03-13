@@ -55,6 +55,89 @@ enum FindingCommentRole {
   client
 }
 
+enum ComplianceProgramStatus {
+  setup_in_progress
+  blocked
+  final_review
+  continuous_compliance
+  completed
+}
+
+enum ComplianceProgramPhase {
+  assessment
+  gap_review
+  roadmap
+  policies
+  controls
+  training
+  final_review
+  continuous_compliance
+}
+
+enum DocumentType {
+  information_security_policy
+  access_control_policy
+  incident_response_policy
+  backup_policy
+  vendor_security_policy
+  cyber_hygiene_handbook
+  incident_communication_plan
+}
+
+enum DocumentStatus {
+  generated
+  customer_input_needed
+  expert_review_needed
+  legal_review_needed
+  approved
+  published
+}
+
+enum TrainingCampaignType {
+  security_basics
+  phishing_awareness
+  incident_reporting
+  password_security
+  sensitive_data_handling
+  management_cybersecurity_briefing
+}
+
+enum TrainingCampaignStatus {
+  planned
+  active
+  completed
+  overdue
+}
+
+enum TrainingAssignmentStatus {
+  pending
+  invited
+  in_progress
+  completed
+  overdue
+}
+
+enum ReviewCaseType {
+  legal
+  security_expert
+  management_signoff
+}
+
+enum ReviewCaseStatus {
+  open
+  in_progress
+  resolved
+  dismissed
+}
+
+enum ReviewCaseDecision {
+  approved
+  changes_required
+  escalated
+  rejected
+  no_action
+}
+
 model Organization {
   id        String   @id @default(uuid())
   name      String
@@ -87,6 +170,10 @@ model User {
   findingComments      FindingComment[]       @relation("FindingCommentAuthor")
   findingStatusChanges FindingStatusHistory[] @relation("FindingStatusChangedBy")
   ownedActionItems     ActionItem[]           @relation("ActionOwner")
+  ownedCompliancePrograms ComplianceProgram[] @relation("ComplianceProgramOwner")
+  editedDocumentArtifacts DocumentArtifact[]  @relation("DocumentEditedBy")
+  assignedReviewCases     ReviewCase[]        @relation("ReviewCaseAssignedTo")
+  reviewedReviewCases     ReviewCase[]        @relation("ReviewCaseReviewedBy")
 }
 
 model Audit {
@@ -121,6 +208,11 @@ model Audit {
   actionItems     ActionItem[]
   findings        Finding[]
   reportSnapshots AuditSnapshot[]
+  complianceProgram ComplianceProgram?
+  documentPackage   DocumentPackage?
+  documentArtifacts DocumentArtifact[]
+  trainingCampaigns TrainingCampaign[]
+  reviewCases       ReviewCase[]
 
   @@index([frameworkVersion])
   @@index([organizationId, clientId])
@@ -274,6 +366,160 @@ model FindingEscalationEvent {
 
   @@index([findingId, escalatedAt])
   @@index([escalationDate])
+}
+
+model ComplianceProgram {
+  id           String                  @id @default(uuid())
+  auditId      String                  @unique
+  status       ComplianceProgramStatus @default(setup_in_progress)
+  currentPhase ComplianceProgramPhase  @default(assessment)
+  currentWeek  Int                     @default(1)
+  startDate    DateTime                @default(now())
+  targetDate   DateTime
+  completedAt  DateTime?
+  ownerUserId  String?
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+
+  audit            Audit             @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  owner            User?             @relation("ComplianceProgramOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
+  documentPackage  DocumentPackage?
+  trainingCampaigns TrainingCampaign[]
+  reviewCases      ReviewCase[]
+
+  @@index([status, currentPhase])
+  @@index([ownerUserId, status])
+}
+
+model DocumentPackage {
+  id        String         @id @default(uuid())
+  auditId   String         @unique
+  programId String?        @unique
+  status    DocumentStatus @default(generated)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  audit     Audit              @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  program   ComplianceProgram? @relation(fields: [programId], references: [id], onDelete: SetNull)
+  artifacts DocumentArtifact[]
+}
+
+model DocumentArtifact {
+  id               String         @id @default(uuid())
+  documentPackageId String
+  auditId          String
+  type             DocumentType
+  title            String
+  status           DocumentStatus @default(generated)
+  templateVersion  String         @default("v1")
+  generatedContent String
+  customContent    String?
+  lastGeneratedAt  DateTime       @default(now())
+  approvedAt       DateTime?
+  publishedAt      DateTime?
+  lastEditedByUserId String?
+  manualEditsCount Int            @default(0)
+  metadata         Json?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  documentPackage       DocumentPackage @relation(fields: [documentPackageId], references: [id], onDelete: Cascade)
+  audit                 Audit           @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  lastEditedBy          User?           @relation("DocumentEditedBy", fields: [lastEditedByUserId], references: [id], onDelete: SetNull)
+  reviewCases           ReviewCase[]
+
+  @@unique([documentPackageId, type])
+  @@index([auditId, status])
+  @@index([type, status])
+}
+
+model TrainingCampaign {
+  id             String               @id @default(uuid())
+  auditId        String
+  programId      String?
+  type           TrainingCampaignType
+  title          String
+  targetGroup    String
+  status         TrainingCampaignStatus @default(planned)
+  isMandatory    Boolean              @default(true)
+  dueDate        DateTime?
+  lastReminderAt DateTime?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  audit       Audit              @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  program     ComplianceProgram? @relation(fields: [programId], references: [id], onDelete: SetNull)
+  assignments TrainingAssignment[]
+  reviewCases ReviewCase[]
+
+  @@unique([auditId, type])
+  @@index([auditId, status])
+  @@index([dueDate, status])
+}
+
+model TrainingAssignment {
+  id                String                 @id @default(uuid())
+  campaignId        String
+  participantLabel  String
+  participantEmail  String?
+  status            TrainingAssignmentStatus @default(pending)
+  completionPercent Int                    @default(0)
+  quizScore         Int?
+  invitedAt         DateTime?
+  reminderSentAt    DateTime?
+  dueDate           DateTime?
+  completedAt       DateTime?
+  metadata          Json?
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+
+  campaign    TrainingCampaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  certificate TrainingCertificate?
+
+  @@index([campaignId, status])
+}
+
+model TrainingCertificate {
+  id                String   @id @default(uuid())
+  assignmentId      String   @unique
+  certificateNumber String   @unique
+  issuedAt          DateTime @default(now())
+  url               String?
+  payload           Json?
+
+  assignment TrainingAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+}
+
+model ReviewCase {
+  id                       String             @id @default(uuid())
+  auditId                  String
+  programId                String?
+  type                     ReviewCaseType
+  status                   ReviewCaseStatus   @default(open)
+  decision                 ReviewCaseDecision?
+  title                    String
+  triggerReason            String
+  details                  String?
+  source                   String
+  fingerprint              String             @unique
+  affectedDocumentArtifactId String?
+  affectedTrainingCampaignId String?
+  reviewedByUserId         String?
+  assignedToUserId         String?
+  reviewedAt               DateTime?
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+
+  audit                  Audit              @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  program                ComplianceProgram? @relation(fields: [programId], references: [id], onDelete: SetNull)
+  affectedDocumentArtifact DocumentArtifact? @relation(fields: [affectedDocumentArtifactId], references: [id], onDelete: SetNull)
+  affectedTrainingCampaign TrainingCampaign? @relation(fields: [affectedTrainingCampaignId], references: [id], onDelete: SetNull)
+  reviewedBy             User?              @relation("ReviewCaseReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  assignedTo             User?              @relation("ReviewCaseAssignedTo", fields: [assignedToUserId], references: [id], onDelete: SetNull)
+
+  @@index([auditId, status])
+  @@index([type, status])
+  @@index([assignedToUserId, status])
 }
 
 model Client {

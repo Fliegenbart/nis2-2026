@@ -17,7 +17,7 @@ export default function ReportPage() {
   const locale = useLocale();
   const t = useTranslations("report");
   const tCategories = useTranslations("categories");
-  const { answers, isLoading, auditData } = useAudit(auditId);
+  const { answers, isLoading, auditData, deliveryCompleteness, reviewCases } = useAudit(auditId);
   const { overallScore, categoryScores } = useScoring(answers);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -121,6 +121,32 @@ export default function ReportPage() {
             </div>
           </div>
         </div>
+
+        {/* Category Breakdown */}
+        {deliveryCompleteness && (
+          <div className="glass-card rounded-2xl p-6 mb-6">
+            <h2 className="text-white font-bold text-lg mb-4">Delivery Completeness</h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-slate-700/30 bg-slate-800/30 p-4 text-sm text-slate-300">
+                Assessment: {deliveryCompleteness.assessmentCompleted ? "Complete" : "Open"}
+              </div>
+              <div className="rounded-xl border border-slate-700/30 bg-slate-800/30 p-4 text-sm text-slate-300">
+                Policies: {deliveryCompleteness.documentsApproved}/{deliveryCompleteness.documentsTotal}
+              </div>
+              <div className="rounded-xl border border-slate-700/30 bg-slate-800/30 p-4 text-sm text-slate-300">
+                Trainings: {deliveryCompleteness.assignmentsCompleted}/{deliveryCompleteness.assignmentsTotal}
+              </div>
+              <div className="rounded-xl border border-slate-700/30 bg-slate-800/30 p-4 text-sm text-slate-300">
+                Open Human Reviews: {deliveryCompleteness.openReviewCases}
+              </div>
+            </div>
+            {reviewCases.length > 0 && (
+              <p className="mt-4 text-xs text-slate-500">
+                Final delivery should not be treated as complete while legal or expert review cases remain open.
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Category Breakdown */}
         <div className="glass-card rounded-2xl p-6 mb-6">

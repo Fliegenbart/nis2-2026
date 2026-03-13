@@ -13,6 +13,7 @@ import {
   isFindingStatus,
   parseOptionalDate,
 } from "@/lib/workflow";
+import { ensureComplianceArtifactsForAudit } from "@/lib/compliance-program";
 
 const FINDING_INCLUDE = {
   createdBy: {
@@ -204,6 +205,8 @@ export async function POST(
         include: FINDING_INCLUDE,
       });
     });
+
+    await ensureComplianceArtifactsForAudit(auditId);
 
     return NextResponse.json({ finding }, { status: 201 });
   } catch {

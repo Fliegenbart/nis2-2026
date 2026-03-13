@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { ensureAuditAccess } from "@/lib/audit-access";
 import { leadCaptureSchema } from "@/lib/validators";
 
 export async function POST(request: NextRequest) {
@@ -13,14 +14,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const data = leadCaptureSchema.parse(body);
 
-    const audit = await prisma.audit.findUnique({
-      where: { id: data.auditId },
-      select: { id: true, userId: true },
-    });
-    if (!audit) {
-      return NextResponse.json({ error: "Audit not found" }, { status: 404 });
+    const access = await ensureAuditAccess(request, data.auditId, "write");
+    if (!access.ok) {
+      return NextResponse.json({ error: access.error }, { status: access.status });
     }
-    if (audit.userId) {
+    if (access.userId) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

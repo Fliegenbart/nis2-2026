@@ -73,20 +73,6 @@ export function LeadCaptureModal({
         );
       }
 
-      // 1. Create audit
-      const auditRes = await fetch("/api/audit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ locale, companyName: companyName || undefined }),
-      });
-      if (!auditRes.ok) {
-        const reason = await readApiError(auditRes, "Audit creation failed");
-        throw new Error(`audit:${auditRes.status}:${reason}`);
-      }
-      const audit = await auditRes.json();
-
-      // 2. Save quick-check answers
       const answersPayload = Object.entries(quickCheckAnswers).map(
         ([questionId, value]) => ({
           questionId,
@@ -95,35 +81,28 @@ export function LeadCaptureModal({
         })
       );
 
-      const answersRes = await fetch(`/api/audit/${audit.id}/answers`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ answers: answersPayload }),
-      });
-      if (!answersRes.ok) {
-        const reason = await readApiError(answersRes, "Saving answers failed");
-        throw new Error(`answers:${answersRes.status}:${reason}`);
-      }
-
-      // 3. Create lead
-      const leadRes = await fetch("/api/leads", {
+      const completionRes = await fetch("/api/quick-check/complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
+          locale,
           email,
           companyName: companyName || undefined,
           consent: true,
-          auditId: audit.id,
+          answers: answersPayload,
         }),
       });
-      if (!leadRes.ok) {
-        const reason = await readApiError(leadRes, "Lead creation failed");
-        throw new Error(`lead:${leadRes.status}:${reason}`);
+      if (!completionRes.ok) {
+        const reason = await readApiError(
+          completionRes,
+          "Quick check completion failed"
+        );
+        throw new Error(`completion:${completionRes.status}:${reason}`);
       }
+      const audit = await completionRes.json();
 
-      // 4. Redirect to dashboard
+      // 2. Redirect to dashboard
       router.push(`/${locale}/audit/${audit.id}/dashboard`);
     } catch (submitError) {
       console.error("Lead capture submit error:", submitError);

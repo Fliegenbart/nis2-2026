@@ -36,6 +36,28 @@ interface AuditSummary {
   inReviewFindings: number;
   overdueFindings: number;
   criticalOpenFindings: number;
+  programPhase:
+    | "assessment"
+    | "gap_review"
+    | "roadmap"
+    | "policies"
+    | "controls"
+    | "training"
+    | "final_review"
+    | "continuous_compliance";
+  programStatus:
+    | "setup_in_progress"
+    | "blocked"
+    | "final_review"
+    | "continuous_compliance"
+    | "completed";
+  currentWeek: number;
+  deliveryProgress: number;
+  documentsApproved: number;
+  totalDocuments: number;
+  completedAssignments: number;
+  totalAssignments: number;
+  openReviewCases: number;
   updatedAt: string;
   createdAt: string;
 }
@@ -286,8 +308,8 @@ export default function ConsultantDashboardPage() {
       ? Math.round(audits.reduce((s, a) => s + a.overallScore, 0) / audits.length)
       : 0;
   const totalOpenActions = audits.reduce((s, a) => s + a.openActions, 0);
-  const totalInReviewFindings = audits.reduce((s, a) => s + a.inReviewFindings, 0);
   const totalOverdueFindings = audits.reduce((s, a) => s + a.overdueFindings, 0);
+  const totalOpenReviewCases = audits.reduce((s, a) => s + a.openReviewCases, 0);
 
   return (
     <div className="min-h-screen bg-slate-950">
@@ -345,10 +367,10 @@ export default function ConsultantDashboardPage() {
           <div className="rounded-xl border border-slate-800 bg-slate-900 p-5">
             <div className="flex items-center gap-3">
               <CheckCircle2 className="h-5 w-5 text-cyan-400" />
-              <span className="text-sm text-slate-400">In Review / Overdue</span>
+              <span className="text-sm text-slate-400">Review Cases / Overdue</span>
             </div>
             <p className="mt-2 text-3xl font-bold text-white">
-              {totalInReviewFindings} / {totalOverdueFindings}
+              {totalOpenReviewCases} / {totalOverdueFindings}
             </p>
           </div>
         </div>
@@ -588,6 +610,10 @@ export default function ConsultantDashboardPage() {
                     <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                     {audit.answeredCount}/{audit.totalQuestions}
                   </span>
+                  <span className="flex items-center gap-1">
+                    <TrendingUp className="h-3.5 w-3.5 text-cyan-400" />
+                    {audit.deliveryProgress}% Delivery
+                  </span>
                   {audit.openActions > 0 && (
                     <span className="flex items-center gap-1">
                       <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
@@ -605,6 +631,33 @@ export default function ConsultantDashboardPage() {
                       <AlertCircle className="h-3.5 w-3.5 text-rose-400" />
                       {audit.overdueFindings} overdue
                     </span>
+                  )}
+                </div>
+
+                <div className="mt-4 rounded-lg border border-slate-800 bg-slate-950/60 p-3">
+                  <div className="mb-2 flex items-center justify-between text-[11px] uppercase tracking-wide text-slate-500">
+                    <span>{audit.programPhase.replaceAll("_", " ")}</span>
+                    <span>{audit.programStatus.replaceAll("_", " ")}</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-slate-800">
+                    <div
+                      className="h-full rounded-full bg-cyan-500 transition-all"
+                      style={{ width: `${audit.deliveryProgress}%` }}
+                    />
+                  </div>
+                  <div className="mt-2 grid grid-cols-3 gap-2 text-[11px] text-slate-400">
+                    <span>Week {audit.currentWeek}</span>
+                    <span>
+                      Docs {audit.documentsApproved}/{audit.totalDocuments}
+                    </span>
+                    <span>
+                      Train {audit.completedAssignments}/{audit.totalAssignments}
+                    </span>
+                  </div>
+                  {audit.openReviewCases > 0 && (
+                    <p className="mt-2 text-[11px] text-amber-300">
+                      {audit.openReviewCases} offene Human Reviews
+                    </p>
                   )}
                 </div>
 

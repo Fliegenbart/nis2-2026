@@ -14,6 +14,145 @@ interface AuditData {
   clientName?: string | null;
 }
 
+export interface ComplianceProgram {
+  id: string;
+  status:
+    | "setup_in_progress"
+    | "blocked"
+    | "final_review"
+    | "continuous_compliance"
+    | "completed";
+  currentPhase:
+    | "assessment"
+    | "gap_review"
+    | "roadmap"
+    | "policies"
+    | "controls"
+    | "training"
+    | "final_review"
+    | "continuous_compliance";
+  currentWeek: number;
+  startDate: string;
+  targetDate: string;
+  completedAt: string | null;
+  ownerUserId: string | null;
+}
+
+export interface DocumentArtifact {
+  id: string;
+  type:
+    | "information_security_policy"
+    | "access_control_policy"
+    | "incident_response_policy"
+    | "backup_policy"
+    | "vendor_security_policy"
+    | "cyber_hygiene_handbook"
+    | "incident_communication_plan";
+  title: string;
+  status:
+    | "generated"
+    | "customer_input_needed"
+    | "expert_review_needed"
+    | "legal_review_needed"
+    | "approved"
+    | "published";
+  generatedContent: string;
+  customContent: string | null;
+  lastGeneratedAt: string;
+  approvedAt: string | null;
+  publishedAt: string | null;
+  manualEditsCount: number;
+}
+
+export interface DocumentPackage {
+  id: string;
+  status: DocumentArtifact["status"];
+  artifacts: DocumentArtifact[];
+}
+
+export interface TrainingCertificate {
+  id: string;
+  certificateNumber: string;
+  issuedAt: string;
+  url: string | null;
+}
+
+export interface TrainingAssignment {
+  id: string;
+  participantLabel: string;
+  participantEmail: string | null;
+  status: "pending" | "invited" | "in_progress" | "completed" | "overdue";
+  completionPercent: number;
+  quizScore: number | null;
+  dueDate: string | null;
+  completedAt: string | null;
+  certificate?: TrainingCertificate | null;
+}
+
+export interface TrainingCampaign {
+  id: string;
+  type:
+    | "security_basics"
+    | "phishing_awareness"
+    | "incident_reporting"
+    | "password_security"
+    | "sensitive_data_handling"
+    | "management_cybersecurity_briefing";
+  title: string;
+  targetGroup: string;
+  status: "planned" | "active" | "completed" | "overdue";
+  isMandatory: boolean;
+  dueDate: string | null;
+  assignments: TrainingAssignment[];
+}
+
+export interface ReviewCase {
+  id: string;
+  type: "legal" | "security_expert" | "management_signoff";
+  status: "open" | "in_progress" | "resolved" | "dismissed";
+  decision:
+    | "approved"
+    | "changes_required"
+    | "escalated"
+    | "rejected"
+    | "no_action"
+    | null;
+  title: string;
+  triggerReason: string;
+  details: string | null;
+  source: string;
+  affectedDocumentArtifactId: string | null;
+  affectedTrainingCampaignId: string | null;
+  assignedToUserId: string | null;
+  reviewedByUserId: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+}
+
+export interface DeliveryCompleteness {
+  answeredCount: number;
+  totalQuestions: number;
+  documentsTotal: number;
+  documentsApproved: number;
+  assignmentsTotal: number;
+  assignmentsCompleted: number;
+  openReviewCases: number;
+  assessmentCompleted: boolean;
+  policiesApproved: boolean;
+  trainingsComplete: boolean;
+  readyForFinalReview: boolean;
+  progress: number;
+}
+
+export interface ComplianceProgramSummary {
+  phase: ComplianceProgram["currentPhase"];
+  status: ComplianceProgram["status"];
+  currentWeek: number;
+  targetDate: string;
+  openReviewCases: number;
+  progress: number;
+}
+
 interface ApiAnswer {
   questionId: string;
   categoryId: string;
@@ -111,62 +250,74 @@ export function useAudit(auditId: string) {
   const [evidences, setEvidences] = useState<Evidence[]>([]);
   const [actionItems, setActionItems] = useState<ActionItem[]>([]);
   const [findings, setFindings] = useState<Finding[]>([]);
+  const [complianceProgram, setComplianceProgram] = useState<ComplianceProgram | null>(null);
+  const [programSummary, setProgramSummary] = useState<ComplianceProgramSummary | null>(null);
+  const [documentPackage, setDocumentPackage] = useState<DocumentPackage | null>(null);
+  const [trainingCampaigns, setTrainingCampaigns] = useState<TrainingCampaign[]>([]);
+  const [reviewCases, setReviewCases] = useState<ReviewCase[]>([]);
+  const [deliveryCompleteness, setDeliveryCompleteness] = useState<DeliveryCompleteness | null>(null);
 
   const pendingChangesRef = useRef<Map<string, PendingChange>>(new Map());
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Load audit data, answers, evidences, and action items on mount
+  const applyAuditPayload = useCallback((data: any) => {
+    setAuditData({
+      id: data.id,
+      companyName: data.companyName,
+      revenue: data.revenue,
+      employeeCount: data.employeeCount,
+      industry: data.industry,
+      locale: data.locale,
+      isPremium: data.isPremium,
+      clientName: data.clientName,
+    });
+
+    const answersMap = new Map<string, AnswerValue>();
+    if (data.answers) {
+      data.answers.forEach((a: ApiAnswer) => {
+        answersMap.set(a.questionId, a.value as AnswerValue);
+      });
+    }
+    setAnswers(answersMap);
+    setEvidences(data.evidences || []);
+    setActionItems(data.actionItems || []);
+    setFindings(data.findings || []);
+    setComplianceProgram(data.complianceProgram || null);
+    setProgramSummary(data.complianceProgramSummary || null);
+    setDocumentPackage(data.documentPackage || null);
+    setTrainingCampaigns(data.trainingCampaigns || []);
+    setReviewCases(data.reviewCases || []);
+    setDeliveryCompleteness(data.deliveryCompleteness || null);
+  }, []);
+
+  const refreshAudit = useCallback(async (): Promise<boolean> => {
+    try {
+      const auditRes = await fetch(`/api/audit/${auditId}`);
+      if (!auditRes.ok) {
+        return false;
+      }
+
+      const data = await auditRes.json();
+      applyAuditPayload(data);
+      return true;
+    } catch (error) {
+      console.error("Error refreshing audit:", error);
+      return false;
+    }
+  }, [applyAuditPayload, auditId]);
+
+  // Load audit data on mount
   useEffect(() => {
     let cancelled = false;
 
     async function loadAudit() {
       try {
         setIsLoading(true);
-
-        const [auditRes, evidenceRes, actionsRes, findingsRes] = await Promise.all([
-          fetch(`/api/audit/${auditId}`),
-          fetch(`/api/audit/${auditId}/evidence`),
-          fetch(`/api/audit/${auditId}/actions`),
-          fetch(`/api/audit/${auditId}/findings`),
-        ]);
-
+        const auditRes = await fetch(`/api/audit/${auditId}`);
         if (!auditRes.ok) throw new Error("Failed to load audit");
         const data = await auditRes.json();
         if (cancelled) return;
-
-        setAuditData({
-          id: data.id,
-          companyName: data.companyName,
-          revenue: data.revenue,
-          employeeCount: data.employeeCount,
-          industry: data.industry,
-          locale: data.locale,
-          isPremium: data.isPremium,
-          clientName: data.clientName,
-        });
-
-        const answersMap = new Map<string, AnswerValue>();
-        if (data.answers) {
-          data.answers.forEach((a: ApiAnswer) => {
-            answersMap.set(a.questionId, a.value as AnswerValue);
-          });
-        }
-        setAnswers(answersMap);
-
-        if (evidenceRes.ok) {
-          const evData = await evidenceRes.json();
-          if (!cancelled) setEvidences(evData.evidences || []);
-        }
-
-        if (actionsRes.ok) {
-          const actData = await actionsRes.json();
-          if (!cancelled) setActionItems(actData.actionItems || []);
-        }
-
-        if (findingsRes.ok) {
-          const findingData = await findingsRes.json();
-          if (!cancelled) setFindings(findingData.findings || []);
-        }
+        applyAuditPayload(data);
       } catch (error) {
         console.error("Error loading audit:", error);
       } finally {
@@ -181,7 +332,7 @@ export function useAudit(auditId: string) {
     return () => {
       cancelled = true;
     };
-  }, [auditId]);
+  }, [applyAuditPayload, auditId]);
 
   // Flush pending changes on unmount
   useEffect(() => {
@@ -213,13 +364,15 @@ export function useAudit(auditId: string) {
 
       if (!res.ok) {
         console.error("Failed to save answers:", await res.text());
+      } else {
+        await refreshAudit();
       }
     } catch (error) {
       console.error("Error saving answers:", error);
     } finally {
       setIsSaving(false);
     }
-  }, [auditId]);
+  }, [auditId, refreshAudit]);
 
   const setAnswer = useCallback(
     (questionId: string, categoryId: string, value: AnswerValue) => {
@@ -318,12 +471,13 @@ export function useAudit(auditId: string) {
         const data = await res.json();
         const actionItem = data.actionItem as ActionItem;
         setActionItems((prev) => [actionItem, ...prev]);
+        await refreshAudit();
         return actionItem;
       } catch {
         return null;
       }
     },
-    [auditId]
+    [auditId, refreshAudit]
   );
 
   const updateActionItem = useCallback(
@@ -360,12 +514,13 @@ export function useAudit(auditId: string) {
         setActionItems((prev) =>
           prev.map((a) => (a.id === actionId ? data.actionItem : a))
         );
+        await refreshAudit();
         return true;
       } catch {
         return false;
       }
     },
-    [auditId]
+    [auditId, refreshAudit]
   );
 
   const deleteActionItem = useCallback(
@@ -379,12 +534,13 @@ export function useAudit(auditId: string) {
         if (!res.ok) return false;
 
         setActionItems((prev) => prev.filter((a) => a.id !== actionId));
+        await refreshAudit();
         return true;
       } catch {
         return false;
       }
     },
-    [auditId]
+    [auditId, refreshAudit]
   );
 
   // Finding workflow functions
@@ -410,12 +566,13 @@ export function useAudit(auditId: string) {
         const data = await res.json();
         const created = data.finding as Finding;
         setFindings((prev) => [created, ...prev]);
+        await refreshAudit();
         return created;
       } catch {
         return null;
       }
     },
-    [auditId]
+    [auditId, refreshAudit]
   );
 
   const updateFinding = useCallback(
@@ -448,12 +605,13 @@ export function useAudit(auditId: string) {
         setFindings((prev) =>
           prev.map((item) => (item.id === findingId ? updated : item))
         );
+        await refreshAudit();
         return true;
       } catch {
         return false;
       }
     },
-    [auditId]
+    [auditId, refreshAudit]
   );
 
   const deleteFinding = useCallback(
@@ -465,12 +623,13 @@ export function useAudit(auditId: string) {
         if (!res.ok) return false;
 
         setFindings((prev) => prev.filter((item) => item.id !== findingId));
+        await refreshAudit();
         return true;
       } catch {
         return false;
       }
     },
-    [auditId]
+    [auditId, refreshAudit]
   );
 
   const addFindingComment = useCallback(
@@ -501,12 +660,175 @@ export function useAudit(auditId: string) {
             };
           })
         );
+        await refreshAudit();
         return comment;
       } catch {
         return null;
       }
     },
-    [auditId]
+    [auditId, refreshAudit]
+  );
+
+  const updateProgram = useCallback(
+    async (
+      updates: Partial<
+        Pick<
+          ComplianceProgram,
+          "status" | "currentPhase" | "currentWeek" | "ownerUserId" | "targetDate"
+        >
+      >
+    ): Promise<boolean> => {
+      try {
+        const res = await fetch(`/api/audit/${auditId}/program`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updates),
+        });
+        if (!res.ok) return false;
+        await refreshAudit();
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [auditId, refreshAudit]
+  );
+
+  const regenerateDocuments = useCallback(
+    async (documentType?: DocumentArtifact["type"]): Promise<boolean> => {
+      try {
+        const res = await fetch(`/api/audit/${auditId}/documents`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ regenerate: true, documentType }),
+        });
+        if (!res.ok) return false;
+        await refreshAudit();
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [auditId, refreshAudit]
+  );
+
+  const updateDocument = useCallback(
+    async (
+      documentId: string,
+      updates: Partial<Pick<DocumentArtifact, "title" | "customContent" | "status">>
+    ): Promise<boolean> => {
+      try {
+        const res = await fetch(`/api/audit/${auditId}/documents/${documentId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updates),
+        });
+        if (!res.ok) return false;
+        await refreshAudit();
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [auditId, refreshAudit]
+  );
+
+  const createTrainingCampaign = useCallback(
+    async (campaign: {
+      type: TrainingCampaign["type"];
+      title: string;
+      targetGroup: string;
+      isMandatory?: boolean;
+      dueDate?: string | null;
+    }): Promise<boolean> => {
+      try {
+        const res = await fetch(`/api/audit/${auditId}/trainings`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(campaign),
+        });
+        if (!res.ok) return false;
+        await refreshAudit();
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [auditId, refreshAudit]
+  );
+
+  const updateTrainingCampaign = useCallback(
+    async (
+      campaignId: string,
+      updates: Partial<
+        Pick<TrainingCampaign, "title" | "targetGroup" | "isMandatory" | "dueDate" | "status">
+      >
+    ): Promise<boolean> => {
+      try {
+        const res = await fetch(`/api/audit/${auditId}/trainings/${campaignId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updates),
+        });
+        if (!res.ok) return false;
+        await refreshAudit();
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [auditId, refreshAudit]
+  );
+
+  const updateTrainingAssignment = useCallback(
+    async (
+      campaignId: string,
+      assignmentId: string,
+      updates: Partial<
+        Pick<
+          TrainingAssignment,
+          "participantLabel" | "participantEmail" | "completionPercent" | "quizScore" | "status" | "dueDate"
+        >
+      >
+    ): Promise<boolean> => {
+      try {
+        const res = await fetch(
+          `/api/audit/${auditId}/trainings/${campaignId}/assignments/${assignmentId}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(updates),
+          }
+        );
+        if (!res.ok) return false;
+        await refreshAudit();
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [auditId, refreshAudit]
+  );
+
+  const updateReviewCase = useCallback(
+    async (
+      reviewCaseId: string,
+      updates: Partial<Pick<ReviewCase, "status" | "decision" | "details" | "assignedToUserId">>
+    ): Promise<boolean> => {
+      try {
+        const res = await fetch(`/api/audit/${auditId}/review-cases/${reviewCaseId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updates),
+        });
+        if (!res.ok) return false;
+        await refreshAudit();
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [auditId, refreshAudit]
   );
 
   return {
@@ -518,6 +840,12 @@ export function useAudit(auditId: string) {
     evidences,
     actionItems,
     findings,
+    complianceProgram,
+    programSummary,
+    documentPackage,
+    trainingCampaigns,
+    reviewCases,
+    deliveryCompleteness,
     uploadEvidence,
     removeEvidence,
     addActionItem,
@@ -527,5 +855,13 @@ export function useAudit(auditId: string) {
     updateFinding,
     deleteFinding,
     addFindingComment,
+    refreshAudit,
+    updateProgram,
+    regenerateDocuments,
+    updateDocument,
+    createTrainingCampaign,
+    updateTrainingCampaign,
+    updateTrainingAssignment,
+    updateReviewCase,
   };
 }

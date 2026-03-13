@@ -1,10 +1,12 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import type { UserRole } from "@prisma/client";
 import { prisma } from "./prisma";
 
 const COOKIE_NAME = "consultant-session";
+const GUEST_AUDIT_COOKIE_NAME = "guest-audit-access";
+const GUEST_AUDIT_MAX_IDS = 25;
 
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET?.trim();
@@ -40,6 +42,89 @@ export function verifyToken(token: string): { userId: string } | null {
   } catch {
     return null;
   }
+}
+
+interface GuestAuditAccessPayload {
+  type: "guest-audit-access";
+  auditIds: string[];
+}
+
+export function mergeGuestAuditIds(
+  currentAuditIds: string[],
+  auditId: string
+): string[] {
+  const uniqueAuditIds = currentAuditIds.filter(
+    (currentAuditId) => currentAuditId !== auditId
+  );
+
+  uniqueAuditIds.push(auditId);
+
+  return uniqueAuditIds.slice(-GUEST_AUDIT_MAX_IDS);
+}
+
+export function createGuestAuditAccessToken(auditIds: string[]): string {
+  const secret = getJwtSecret();
+  const payload: GuestAuditAccessPayload = {
+    type: "guest-audit-access",
+    auditIds: auditIds.filter(Boolean),
+  };
+
+  return jwt.sign(payload, secret, { expiresIn: "7d" });
+}
+
+export function verifyGuestAuditAccessToken(token: string): string[] | null {
+  const secret = getJwtSecret();
+
+  try {
+    const payload = jwt.verify(token, secret) as Partial<GuestAuditAccessPayload>;
+    if (
+      payload.type !== "guest-audit-access" ||
+      !Array.isArray(payload.auditIds) ||
+      payload.auditIds.some((auditId) => typeof auditId !== "string")
+    ) {
+      return null;
+    }
+
+    return payload.auditIds;
+  } catch {
+    return null;
+  }
+}
+
+export function getGuestAuditIds(request: NextRequest): string[] {
+  const token = request.cookies.get(GUEST_AUDIT_COOKIE_NAME)?.value;
+  if (!token) {
+    return [];
+  }
+
+  return verifyGuestAuditAccessToken(token) ?? [];
+}
+
+export function hasGuestAuditAccess(
+  request: NextRequest,
+  auditId: string
+): boolean {
+  return getGuestAuditIds(request).includes(auditId);
+}
+
+export function grantGuestAuditAccess(
+  request: NextRequest,
+  response: NextResponse,
+  auditId: string
+): void {
+  const mergedAuditIds = mergeGuestAuditIds(getGuestAuditIds(request), auditId);
+
+  response.cookies.set(
+    GUEST_AUDIT_COOKIE_OPTIONS.name,
+    createGuestAuditAccessToken(mergedAuditIds),
+    {
+      httpOnly: GUEST_AUDIT_COOKIE_OPTIONS.httpOnly,
+      secure: GUEST_AUDIT_COOKIE_OPTIONS.secure,
+      sameSite: GUEST_AUDIT_COOKIE_OPTIONS.sameSite,
+      maxAge: GUEST_AUDIT_COOKIE_OPTIONS.maxAge,
+      path: GUEST_AUDIT_COOKIE_OPTIONS.path,
+    }
+  );
 }
 
 export interface SessionUser {
@@ -111,6 +196,15 @@ export const CONSULTANT_WRITE_ROLES: readonly UserRole[] = [
 
 export const SESSION_COOKIE_OPTIONS = {
   name: COOKIE_NAME,
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  maxAge: 60 * 60 * 24 * 7,
+  path: "/",
+};
+
+export const GUEST_AUDIT_COOKIE_OPTIONS = {
+  name: GUEST_AUDIT_COOKIE_NAME,
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: "lax" as const,

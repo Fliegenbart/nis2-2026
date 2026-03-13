@@ -7,6 +7,10 @@ import {
 import { NIS2_CATEGORIES } from "@/data/nis2-framework";
 import { calculateAllCategoryScores, calculateOverallScore } from "@/lib/scoring";
 import type { AnswerValue } from "@/data/nis2-framework";
+import {
+  ensureComplianceArtifactsForAudit,
+  getAuditComplianceOverview,
+} from "@/lib/compliance-program";
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,26 +19,28 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ audits: [] });
     }
 
-    const audits = await prisma.audit.findMany({
+    const auditIds = await prisma.audit.findMany({
       where: { organizationId: user.organizationId },
-      include: {
-        answers: true,
-        actionItems: {
-          select: { id: true, status: true },
-        },
-        findings: {
-          select: { id: true, status: true, dueDate: true, severity: true },
-        },
-      },
+      select: { id: true },
       orderBy: { updatedAt: "desc" },
     });
+
+    await Promise.all(
+      auditIds.map((audit) => ensureComplianceArtifactsForAudit(audit.id))
+    );
+
+    const audits = await Promise.all(
+      auditIds.map((audit) => getAuditComplianceOverview(audit.id))
+    );
 
     const totalQuestions = NIS2_CATEGORIES.reduce(
       (sum, cat) => sum + cat.questions.length,
       0
     );
 
-    const auditSummaries = audits.map((audit) => {
+    const auditSummaries = audits
+      .filter((audit): audit is NonNullable<typeof audit> => Boolean(audit))
+      .map((audit) => {
       const answersMap = new Map<string, AnswerValue>();
       for (const a of audit.answers) {
         answersMap.set(a.questionId, a.value as AnswerValue);
@@ -53,6 +59,8 @@ export async function GET(request: NextRequest) {
       const criticalOpenFindings = audit.findings.filter(
         (f) => f.status !== "closed" && f.severity === "critical"
       ).length;
+      const documents = audit.documentPackage?.artifacts ?? [];
+      const trainingAssignments = audit.trainingCampaigns.flatMap((campaign) => campaign.assignments);
 
       return {
         id: audit.id,
@@ -68,6 +76,15 @@ export async function GET(request: NextRequest) {
         inReviewFindings,
         overdueFindings,
         criticalOpenFindings,
+        programPhase: audit.complianceProgramSummary.phase,
+        programStatus: audit.complianceProgramSummary.status,
+        currentWeek: audit.complianceProgramSummary.currentWeek,
+        deliveryProgress: audit.complianceProgramSummary.progress,
+        documentsApproved: audit.deliveryCompleteness.documentsApproved,
+        totalDocuments: documents.length,
+        completedAssignments: audit.deliveryCompleteness.assignmentsCompleted,
+        totalAssignments: trainingAssignments.length,
+        openReviewCases: audit.deliveryCompleteness.openReviewCases,
         updatedAt: audit.updatedAt,
         createdAt: audit.createdAt,
       };

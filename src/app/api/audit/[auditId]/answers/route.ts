@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { saveAnswersSchema } from "@/lib/validators";
 import { ensureAuditAccess } from "@/lib/audit-access";
+import { ensureComplianceArtifactsForAudit } from "@/lib/compliance-program";
 
 export async function POST(
   request: NextRequest,
@@ -22,8 +23,14 @@ export async function POST(
     if (!audit) {
       return NextResponse.json({ error: "Audit not found" }, { status: 404 });
     }
+    if (audit.isLocked) {
+      return NextResponse.json(
+        { error: "Audit is locked" },
+        { status: 409 }
+      );
+    }
 
-    const results = await Promise.all(
+    const results = await prisma.$transaction(
       answers.map((answer) =>
         prisma.answer.upsert({
           where: {
@@ -47,6 +54,8 @@ export async function POST(
         })
       )
     );
+
+    await ensureComplianceArtifactsForAudit(auditId);
 
     return NextResponse.json({ saved: results.length });
   } catch (error) {

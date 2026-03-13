@@ -52,6 +52,12 @@ export async function getOrCreateAuditSnapshot(auditId: string) {
         potentialFine: risk.potentialFine,
         rationale: risk.rationale,
       },
+      answers: audit.answers.map((answer) => ({
+        questionId: answer.questionId,
+        categoryId: answer.categoryId,
+        value: answer.value,
+        notes: answer.notes,
+      })),
       categoryScores: scoring.categoryScores,
       generatedAt: new Date().toISOString(),
     })

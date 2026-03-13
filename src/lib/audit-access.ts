@@ -3,6 +3,7 @@ import {
   CONSULTANT_READ_ROLES,
   CONSULTANT_WRITE_ROLES,
   getSession,
+  hasGuestAuditAccess,
   hasRole,
 } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -67,6 +68,10 @@ export async function ensureAuditAccess(
   const siteAuth = request.cookies.get("site-auth")?.value;
   if (siteAuth !== "authenticated") {
     return { ok: false, status: 401, error: "Unauthorized" };
+  }
+
+  if (!hasGuestAuditAccess(request, audit.id)) {
+    return { ok: false, status: 403, error: "Forbidden" };
   }
 
   return { ok: true, auditId: audit.id, userId: null };

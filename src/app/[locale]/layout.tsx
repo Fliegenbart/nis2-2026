@@ -42,18 +42,19 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale}>
-      <body
-        className={`${outfit.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
-      >
-        <NextIntlClientProvider messages={messages}>
-          <TooltipProvider>
+    <div
+      lang={locale}
+      className={`${outfit.variable} ${geistMono.variable} min-h-screen antialiased`}
+    >
+      <NextIntlClientProvider messages={messages}>
+        <TooltipProvider>
+          <div className="flex min-h-screen flex-col">
             <Header />
             <main className="flex-1">{children}</main>
             <Footer />
-          </TooltipProvider>
-        </NextIntlClientProvider>
-      </body>
-    </html>
+          </div>
+        </TooltipProvider>
+      </NextIntlClientProvider>
+    </div>
   );
 }
